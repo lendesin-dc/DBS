@@ -130,17 +130,17 @@
 
 <!-- VENTANA EMERGENTE GIGANTE PARA CONFIRMACIÓN DE LECTURA -->
 <div id="modal-exito-gigante" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
-  <div style="font-size: 8rem; margin-bottom: 0px;">✅</div>
-  <div style="font-size: 2.0rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
+  <div style="font-size: 7rem; margin-bottom: 0px;">✅</div>
+  <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
   
   <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-    <div style="font-size: 1.3rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
-    <div id="exito-sku" style="font-size: 4.0rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+    <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
+    <div id="exito-sku" style="font-size: 3.7rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
     
-    <div style="font-size: 1.3rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
-    <div id="exito-serie" style="font-size: 4.0rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+    <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+    <div id="exito-serie" style="font-size: 3.7rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
   </div>
-  <div style="font-size: 1.1rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+  <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
 </div>
 
 
@@ -467,7 +467,7 @@ async function sincronizarColaPendientes() {
   
   console.log(`Conexión recuperada. Sincronizando ${pendientes.length} registros en bloque...`);
   
-  const urlWebApp = "TU_URL_DE_GOOGLE_APPS_SCRIPT"; // Recuerda mantener tu URL real aquí
+  const urlWebApp = URL_GOOGLE_APP; // Recuerda mantener tu URL real aquí
   
   // 1. Creamos un mapa de promesas para disparar TODOS los envíos en paralelo
   const envios = pendientes.map(registro => {

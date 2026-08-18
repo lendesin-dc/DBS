@@ -128,6 +128,20 @@
     </div>
 </div>
 
+<!-- VENTANA EMERGENTE GIGANTE PARA CONFIRMACIÓN DE LECTURA -->
+<div id="modal-exito-gigante" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
+  <div style="font-size: 8rem; margin-bottom: 0px;">✅</div>
+  <div style="font-size: 2.2rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
+  
+  <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+    <div style="font-size: 1.5rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
+    <div id="exito-sku" style="font-size: 4.5rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+    
+    <div style="font-size: 1.5rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+    <div id="exito-serie" style="font-size: 4.5rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+  </div>
+  <div style="font-size: 1.2rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+</div>
 
 
 <!-- Reemplaza desde aquí hasta el final de tu archivo -->
@@ -147,6 +161,9 @@ let historialLecturas = JSON.parse(localStorage.getItem('historial_bodega')) || 
 let streamActivoBodega = null;
 let bucleAnalisisBodega = null;
 let detectorNativoBodega = null;
+// Variable global para reutilizar el mismo canal de audio ya aprobado por el usuario
+let miAudioContextIndustrial = null;
+
 
 window.onload = function() {
     actualizarTablaVista();
@@ -167,20 +184,55 @@ function cambiarSeleccion(botonPresionado, propiedad) {
 }
 
 // 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz)
+// 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz) - OPTIMIZADA MÓVIL
 function sonarBip750Hz() {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(750, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.12);
-    } catch (e) { console.error("Audio bloqueado:", e); }
+  try {
+    // 1. Si no existe el contexto, lo creamos (Ojo: subimos volumen a 0.6 para la bodega)
+    if (!miAudioContextIndustrial) {
+      miAudioContextIndustrial = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    const audioCtx = miAudioContextIndustrial;
+
+    // 2. TRUCO MÓVIL: Si el celular lo suspendió, lo obligamos a despertar
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
+    
+    // Subimos de 0.2 a 0.6 para que compita contra el ruido ambiental de las grúas horquilla
+    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.12);
+  } catch (e) { 
+    console.error("Audio bloqueado:", e); 
+  }
 }
+
+
+function mostrarConfirmacionGigante(sku, serie) {
+  // Inyectamos los textos en mayúsculas y de forma masiva
+  document.getElementById('exito-sku').innerText = String(sku).toUpperCase();
+  document.getElementById('exito-serie').innerText = String(serie).toUpperCase();
+  
+  const modalExito = document.getElementById('modal-exito-gigante');
+  modalExito.style.display = "flex";
+  
+  // Temporizador para que se desvanezca solo a los 3000 milisegundos (2 segundos)
+  setTimeout(() => {
+    modalExito.style.display = "none";
+  }, 2000);
+}
+
 
 // 3. NUEVA FUNCIÓN: COMPROBACIÓN NATIVA DE DISPOSITIVOS
 function sincronizarMotorHardware() {
@@ -204,10 +256,13 @@ function sincronizarMotorHardware() {
 async function encenderCamaraBodega() {
     // 1. Escondemos el teclado de forma forzada
     const inputReal = document.getElementById('txt-lector');
+
     if (inputReal) {
         inputReal.blur();
     }
-
+    // Al tocar el botón con el dedo, disparamos esto para habilitar el permiso del parlante
+    sonarBip750Hz(); 
+  
     // 2. Si no existe la interfaz del visor en el HTML, la inyectamos dinámicamente
     let modal = document.getElementById('modal-escaner');
     if (!modal) {
@@ -301,6 +356,12 @@ function procesarLectura(evento) {
     const input = document.getElementById('txt-lector');
     const cadenaQR = input.value.trim();
     if (cadenaQR === "") return;
+
+    if (!cadenaQR.includes('#')) {
+    alert("¡CÓDIGO NO VÁLIDO!\n\nAl código le falta el separador #).\n\nPor favor, intente leer nuevamente.");
+    input.value = "";
+    return;
+  }
     
     const segmentos = cadenaQR.split('#');
     const skuExtraido = segmentos[0] || 'ERROR';
@@ -349,6 +410,11 @@ function procesarLectura(evento) {
     guardarEnMemoriaLocal();
     actualizarTablaVista();
     enviarAGoogleSheets(nuevoRegistro);
+
+    // DISPARADOR DEL CARTEL GIGANTE: Añade esta línea aquí abajo
+    mostrarConfirmacionGigante(skuExtraido, serieExtraida);
+
+
     input.value = "";
    // input.focus();
 }

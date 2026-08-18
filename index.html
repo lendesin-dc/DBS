@@ -6,86 +6,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estación de Registro de Inventario</title>
+    <title>Registro de Bodega S</title>
     <style>
         /* Ajustes de diseño adaptables (Mobile-First) */
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; background-color: #f0f2f5; }
-        .contenedor { max-width: 900px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        h2 { text-align: center; margin-top: 0; font-size: 1.4rem; color: #1a1a1a; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 5px; background-color: #f0f2f5; }
+        .contenedor { max-width: 900px; margin: 0 auto; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h2 { text-align: center; margin-top: 0; font-size: 1.2rem; color: #1a1a1a; }
         
-        .franja-botones { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 6px; }
-        .fila-botones { display: flex; flex-direction: column; gap: 5px; }
+        .franja-botones { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; background: #f8f9fa; padding: 5px; border-radius: 6px; }
+        .fila-botones { display: flex; flex-direction: column; gap: 7px; }
         
         /* En pantallas grandes ponemos las etiquetas al lado, en celulares arriba */
         @media(min-width: 600px) {
-            .fila-botones { flex-direction: row; align-items: center; gap: 15px; }
-            .fila-botones label { width: 140px; }
+            .fila-botones { flex-direction: row; align-items: center; gap: 5px; }
+            .fila-botones label { width: 150px; }
         }
         
         .fila-botones label { font-weight: bold; font-size: 14px; color: #495057; }
         .grupo { display: flex; gap: 8px; flex-wrap: wrap; }
         
         /* Botones optimizados para dedos grandes en pantallas táctiles */
-        button.btn-opcion { padding: 12px 20px; font-size: 15px; font-weight: 500; border: 1px solid #ced4da; border-radius: 6px; background: white; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        button.btn-opcion { min-width: 65px; padding: 2px 10px; font-size: 20px; font-weight: 500; border: 1px solid #ced4da; border-radius: 6px; background: white; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
-        .franja-lector { margin-bottom: 20px; background: #e7f1ff; padding: 12px; border-radius: 6px; border: 1px solid #b6d4fe; }
+        .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
         .franja-lector label { display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
-        .input-qr { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
+        .input-qr { width: 100%; padding: 5px; font-size: 16px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 750px; }
-        th { background: #212529; color: white; padding: 10px; }
-        td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 750px; }
+        th { background: #212529; color: white; padding: 7px; }
+        td { padding: 5px; border-bottom: 1px solid #dee2e6; }
         
         tr.registro-anulado { background-color: #f1f3f5 !important; color: #a0aec0; text-decoration: line-through; }
-        .btn-anular { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-anular { background: #dc3545; color: white; border: none; padding: 6px 6px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .badge-anulado { color: #718096; font-weight: bold; text-decoration: none !important; }
         
         /* Panel inferior de utilidades */
-        .panel-inferior { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; }
-        .btn-limpiar { background: #6c757d; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .panel-inferior { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; }
+        .btn-limpiar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
         .btn-limpiar:hover { background: #5c636a; }
     </style>
 </head>
 <body>
 
 <div class="contenedor">
-    <h2>Registro de Bodega Activo</h2>
+    <h2>Registro de Bodega S</h2>
 
     <!-- FILAS DE BOTONES ADAPTABLES -->
     <div class="franja-botones">
         <div class="fila-botones">
-            <label>Origen (Col B):</label>
+            <label>Origen :</label>
             <div class="grupo">
-                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'origen')">D05</button>
-                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">D02</button>
-                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">BX</button>
+                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'origen')">C-328</button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">D-05</button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">B-X</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">D-02</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">D-01</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">B-07</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">LIN</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">B-02</button>
+		        <button class="btn-opcion" onclick="cambiarSeleccion(this, 'origen')">C-332</button>
+                
             </div>
         </div>
         <div class="fila-botones">
-            <label>Estado Orig. (Col C):</label>
+            <label>Estado Orig.:</label>
             <div class="grupo">
-                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'estOrigen')">R</button>
-                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')">A</button>
-                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')">E</button>
+                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'estOrigen')"> E </button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')">B</button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> U </button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> A </button>         
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> DD </button>         
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> I </button>         
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> R </button>         
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'estOrigen')"> S </button>         
+                
             </div>
         </div>
         <div class="fila-botones">
-            <label>Destino (Col H):</label>
+            <label>Destino :</label>
             <div class="grupo">
-                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'destino')">B01</button>
-                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'destino')">B07</button>
+                <button class="btn-opcion activo" onclick="cambiarSeleccion(this, 'destino')">B-01</button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'destino')">B-07</button>
+                <button class="btn-opcion" onclick="cambiarSeleccion(this, 'destino')">C-770</button>
             </div>
         </div>
     </div>
 
     <!-- CUADRO DE LECTURA -->
-    <div class="franja-lector">
-        <label for="txt-lector">LECTURA DE PRODUCTO QR:</label>
-        <input type="text" id="txt-lector" class="input-qr" placeholder="Escanee aquí..." autofocus onkeypress="procesarLectura(event)">
-    </div>
+    <!-- Modificación en tu franja-lector: Quitamos el autofocus rígido -->
+<div class="franja-lector">
+    <label for="txt-lector">LECTURA DE QR:</label>
+    <input type="text" id="txt-lector" class="input-qr" placeholder="Digite aquí..." onkeypress="procesarLectura(event)">
+</div>
 
     <!-- TABLA DE HISTORIAL RESPONSIVA -->
     <div class="panel-inferior">
@@ -103,7 +118,7 @@
                     <th>Producto QR</th>
                     <th>SKU</th>
                     <th>Serie</th>
-                    <th>Estado (D)</th>
+                    <th>Estado  Orden</th>
                     <th>Destino</th>
                     <th>Acción</th>
                 </tr>
@@ -113,148 +128,271 @@
     </div>
 </div>
 
+
+
+<!-- Reemplaza desde aquí hasta el final de tu archivo -->
 <script>
-    // Reemplaza por tu enlace ejecutable real de Google Apps Script
-    const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbxWVZSy0O18Lv8WcIYVmv1toTJTDGxdBs7e3boFpWxa-EmY29sXxOx3jhTKfY2fA9E4VQ/exec"; 
-    const MINUTOS_RESTRICCION_DUPLICADO = 5;
+// 1. CONFIGURACIÓN COMPLETA DE TU ENTORNO REMOTO DE GOOGLE
+const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbxWVZSy0O18Lv8WcIYVmv1toTJTDGxdBs7e3boFpWxa-EmY29sXxOx3jhTKfY2fA9E4VQ/exec"; 
+const MINUTOS_RESTRICCION_DUPLICADO = 5;
 
-    let configuracionActual = {
-        origen: 'D05',
-        estOrigen: 'R',
-        destino: 'B01'
-    };
+let configuracionActual = {
+    origen: 'C-328',
+    estOrigen: 'E',
+    destino: 'B-01'
+};
+let historialLecturas = JSON.parse(localStorage.getItem('historial_bodega')) || [];
 
-    let historialLecturas = JSON.parse(localStorage.getItem('historial_bodega')) || [];
+// Variables globales para el control estricto de memoria de la cámara
+let streamActivoBodega = null;
+let bucleAnalisisBodega = null;
+let detectorNativoBodega = null;
 
-    window.onload = function() {
-        actualizarTablaVista();
-    };
+window.onload = function() {
+    actualizarTablaVista();
+    sincronizarMotorHardware(); // Inicializa el detector al cargar
 
-    function cambiarSeleccion(botonPresionado, propiedad) {
-        const contenedorGrupo = botonPresionado.parentElement;
-        const botonesDelGrupo = contenedorGrupo.querySelectorAll('.btn-opcion');
-        
-        botonesDelGrupo.forEach(btn => btn.classList.remove('activo'));
-        botonPresionado.classList.add('activo');
-        
-        configuracionActual[propiedad] = botonPresionado.innerText;
-        document.getElementById('txt-lector').focus();
+       // Foco manual controlado SOLO al iniciar la app
+    const input = document.getElementById('txt-lector');
+    if (input) input.focus();
+};
+
+function cambiarSeleccion(botonPresionado, propiedad) {
+    const contenedorGrupo = botonPresionado.parentElement;
+    const botonesDelGrupo = contenedorGrupo.querySelectorAll('.btn-opcion');
+    botonesDelGrupo.forEach(btn => btn.classList.remove('activo'));
+    botonPresionado.classList.add('activo');
+    configuracionActual[propiedad] = botonPresionado.innerText;
+//    document.getElementById('txt-lector').focus();
+}
+
+// 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz)
+function sonarBip750Hz() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(750, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (e) { console.error("Audio bloqueado:", e); }
+}
+
+// 3. NUEVA FUNCIÓN: COMPROBACIÓN NATIVA DE DISPOSITIVOS
+function sincronizarMotorHardware() {
+    if ('BarcodeDetector' in window) {
+        detectorNativoBodega = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
+        // Modificamos visualmente el label azul para que el operador sepa que puede usar la cámara
+        const labelLector = document.querySelector('label[for="txt-lector"]');
+        if (labelLector) {
+            labelLector.innerHTML = "📸 LECTURA QR-Serial (Presione aquí):";
+            labelLector.style.cursor = "pointer";
+            labelLector.style.textDecoration = "underline";
+            labelLector.onclick = encenderCamaraBodega;
+        }
+    }
+}
+
+    
+// 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA
+
+// 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
+async function encenderCamaraBodega() {
+    // 1. Escondemos el teclado de forma forzada
+    const inputReal = document.getElementById('txt-lector');
+    if (inputReal) {
+        inputReal.blur();
     }
 
-    function procesarLectura(evento) {
-        if (evento.key !== 'Enter') return;
-        
-        const input = document.getElementById('txt-lector');
-        const cadenaQR = input.value.trim();
+    // 2. Si no existe la interfaz del visor en el HTML, la inyectamos dinámicamente
+    let modal = document.getElementById('modal-escaner');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-escaner';
+        // AJUSTE: Cambiamos center por flex-start y agregamos padding-top para SUBIR la imagen de la cámara
+        modal.style = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:flex-start; padding-top:40px; flex-direction:column;";
+        modal.innerHTML = `
+            <div style="width:300px; height:300px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+                <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                <div id="laser-guia" style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.7); box-shadow:0 0 4px #ff0000; pointer-events:none; z-index:10;"></div>
+            </div>
+            <button onclick="apagarCamaraBodega()" style="margin-top:20px; padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">❌ Cancelar Escaneo</button>
+        `;
+        document.body.appendChild(modal);
+    }
 
-        if (cadenaQR === "") return;
+    // 3. RETRASO CRÍTICO: Esperamos 150ms a que el teclado baje antes de renderizar la cámara
+    setTimeout(async () => {
+        modal.style.display = "flex"; 
+        const video = document.getElementById('video-bodega-stream');
 
-        const segmentos = cadenaQR.split('#');
-        const skuExtraido = segmentos[0] || 'ERROR';
-        const serieExtraida = segmentos[1] || 'ERROR';
-        const estadoDestinoExtraido = segmentos[2] || 'ERROR';
-
-        // CONTROL CRONOLÓGICO DE DUPLICADOS
-        const momentoActual = Date.now();
-        const registroDuplicado = historialLecturas.find(item => 
-            item.serie === serieExtraida && 
-            item.esAnulado === false &&
-            item.estadoOrigen !== 'ANULADO'
-        );
-
-        if (registroDuplicado) {
-            const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-
-            if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
-                const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
-                alert(`⚠️ ¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
-                input.value = "";
-                input.focus();
-                return;
-            }
+        try {
+            streamActivoBodega = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false
+            });
+            video.srcObject = streamActivoBodega;
+            bucleEscaneo = setInterval(analizarCuadroEnVivo, 160); 
+        } catch (err) {
+            alert("Acceso a la cámara trasera denegado o no disponible.");
+            modal.style.display = "none";
         }
+    }, 350); // 150 milisegundos de espera para limpiar el teclado de la pantalla
+}
 
-        const ahora = new Date(momentoActual);
-        const año = ahora.getFullYear();
-        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-        const dia = String(ahora.getDate()).padStart(2, '0');
-        const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
-        const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
+    
 
-        const nuevoRegistro = {
-            id: momentoActual,
-            fechaHora: timestampStr,
-            origen: configuracionActual.origen,
-            estadoOrigen: configuracionActual.estOrigen,
-            qrCompleto: cadenaQR,
-            sku: skuExtraido,
-            serie: serieExtraida,
-            estadoDestino: estadoDestinoExtraido,
-            destino: configuracionActual.destino,
-            esAnulado: false
-        };
 
-        historialLecturas.unshift(nuevoRegistro);
+// 5. NUEVA FUNCIÓN: ANÁLISIS ACELERADO POR GPU (Filtra, Inyecta y ejecuta Enter)
+async function analizarCuadroEnVivo() {
+    const video = document.getElementById('video-bodega-stream');
+    if (video && video.readyState === video.HAVE_ENOUGH_DATA && detectorNativoBodega) {
+        try {
+            const codigos = await detectorNativoBodega.detect(video);
+            if (codigos.length > 0) {
+                // ¡CAPTURA EXITOSA!
+                sonarBip750Hz();
+                
+                const input = document.getElementById('txt-lector');
+                input.value = codigos[0].rawValue; // Setea la cadena compleja (ej: CH-5050NG#2605000002#B)
+                
+                apagarCamaraBodega(); // Apaga inmediatamente el hardware liberando RAM
+
+                // Simulamos la pulsación física de la tecla Enter para disparar tu lógica nativa de guardado
+                const fakeEvent = { key: 'Enter' };
+                procesarLectura(fakeEvent);
+            }
+        } catch (e) { /* Silencio cuadro a cuadro */ }
+    }
+}
+
+// 6. NUEVA FUNCIÓN: APAGADO Y CONTROL DE FOCO POS-ESCANEO
+function apagarCamaraBodega() {
+    clearInterval(bucleEscaneo);
+    if (streamActivoBodega) {
+        streamActivoBodega.getTracks().forEach(track => track.stop());
+    }
+    const modal = document.getElementById('modal-escaner');
+    if (modal) modal.style.display = "none";
+    
+    // 🚀 EL TRUCO DE FOCO INDUSTRIAL:
+    // En lugar de hacer focus() en la caja de texto (lo que levantaría el teclado),
+    // buscamos el primer botón de "Anular" disponible en tu tabla azul.
+    const primerBotonAnular = document.querySelector('.btn-anular');
+    
+    if (primerBotonAnular) {
+        primerBotonAnular.focus(); // El foco se queda atrapado en el botón sin abrir el teclado
+        console.log("Teclado abajo. Foco posicionado en el botón Anular.");
+    } else {
+        // Fallback: Si la tabla está vacía y no hay botones, simplemente le quitamos 
+        // el foco a toda la página para asegurar que el teclado no se levante.
+        document.activeElement.blur();
+    }
+}
+
+
+// --- TU LÓGICA DE NEGOCIO ORIGINAL INTEGRADA SINTÁCTICAMENTE ---
+function procesarLectura(evento) {
+    if (evento.key !== 'Enter') return;
+    const input = document.getElementById('txt-lector');
+    const cadenaQR = input.value.trim();
+    if (cadenaQR === "") return;
+    
+    const segmentos = cadenaQR.split('#');
+    const skuExtraido = segmentos[0] || 'ERROR';
+    const serieExtraida = segmentos[1] || 'ERROR';
+    const estadoDestinoExtraido = segmentos[2] || 'ERROR';
+
+    const momentoActual = Date.now();
+    const registroDuplicado = historialLecturas.find(item => 
+        item.serie === serieExtraida && 
+        item.esAnulado === false &&
+        item.estadoOrigen !== 'ANULADO'
+    );
+    
+    if (registroDuplicado) {
+        const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+        if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
+            const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
+            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
+            input.value = "";
+     //       input.focus();
+            return;
+        }
+    }
+    
+    const ahora = new Date(momentoActual);
+    const año = ahora.getFullYear();
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
+    const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
+    
+    const nuevoRegistro = {
+        id: momentoActual,
+        fechaHora: timestampStr,
+        origen: configuracionActual.origen,
+        estadoOrigen: configuracionActual.estOrigen,
+        qrCompleto: cadenaQR,
+        sku: skuExtraido,
+        serie: serieExtraida,
+        estadoDestino: estadoDestinoExtraido,
+        destino: configuracionActual.destino,
+        esAnulado: false
+    };
+    
+    historialLecturas.unshift(nuevoRegistro);
+    guardarEnMemoriaLocal();
+    actualizarTablaVista();
+    enviarAGoogleSheets(nuevoRegistro);
+    input.value = "";
+   // input.focus();
+}
+
+function solicitarAnulacion(idRegistro) {
+    const registro = historialLecturas.find(item => item.id === idRegistro);
+    if (registro && !registro.esAnulado) {
+        registro.esAnulado = true;
+        registro.estadoOrigen = "R"; 
+        registro.estadoDestino = "ANULADO"; 
+        registro.destino = "ANULA ID: " + String(idRegistro); 
         guardarEnMemoriaLocal();
         actualizarTablaVista();
-        enviarAGoogleSheets(nuevoRegistro);
-
-        input.value = "";
-        input.focus();
+        enviarAGoogleSheets(registro);
     }
+    document.getElementById('txt-lector').focus();
+}
 
-    function solicitarAnulacion(idRegistro) {
-        const registro = historialLecturas.find(item => item.id === idRegistro);
-        
-        if (registro && !registro.esAnulado) {
-            registro.esAnulado = true;
-            registro.estadoOrigen = "R"; 
-            registro.estadoDestino = "ANULADO"; 
-            registro.destino = "ANULA ID: " + String(idRegistro); 
+function guardarEnMemoriaLocal() {
+    localStorage.setItem('historial_bodega', JSON.stringify(historialLecturas));
+}
 
-            guardarEnMemoriaLocal();
-            actualizarTablaVista();
-            enviarAGoogleSheets(registro);
-        }
-        document.getElementById('txt-lector').focus();
+function limpiarPantallaCompleta() {
+    if(confirm("¿Desea limpiar la lista de la pantalla?\n(Esto no borrará los datos ya guardados en Google Sheets)")) {
+        historialLecturas = [];
+        localStorage.removeItem('historial_bodega');
+        actualizarTablaVista();
     }
+    document.getElementById('txt-lector').focus();
+}
 
-    function guardarEnMemoriaLocal() {
-        localStorage.setItem('historial_bodega', JSON.stringify(historialLecturas));
-    }
+function enviarAGoogleSheets(objetoRegistro) {
+    fetch(URL_GOOGLE_APP, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(objetoRegistro)
+    })
+    .catch(err => console.error("Fallo de red al transmitir remotamente:", err));
+}
 
-    // ACCIÓN: Vacía la memoria visual local sin alterar el Sheets remoto
-    // 4. Guarda la matriz actualizada en el disco duro del navegador
-    function guardarEnMemoriaLocal() {
-        localStorage.setItem('historial_bodega', JSON.stringify(historialLecturas));
-    }
-
-    // ACCIÓN: Vacía la memoria visual local sin alterar el Sheets remoto
-    function limpiarPantallaCompleta() {
-        if(confirm("¿Desea limpiar la lista de la pantalla?\n(Esto no borrará los datos ya guardados en Google Sheets)")) {
-            historialLecturas = [];
-            localStorage.removeItem('historial_bodega');
-            actualizarTablaVista();
-        }
-        document.getElementById('txt-lector').focus();
-    }
-
-    // 5. Envía el objeto de forma remota mediante una solicitud HTTP POST
-    function enviarAGoogleSheets(objetoRegistro) {
-        fetch(URL_GOOGLE_APP, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(objetoRegistro)
-        })
-        .catch(err => console.error("Fallo de red al transmitir remotamente:", err));
-    }
-
-    // 6. Dibuja las filas acumuladas en la pantalla
-    function actualizarTablaVista() {
-        const tbody = document.getElementById('tabla-cuerpo');
-        tbody.innerHTML = "";
-
+function actualizarTablaVista() {
+    const tbody = document.getElementById('tabla-cuerpo');
+    tbody.innerHTML = "";
         historialLecturas.forEach(reg => {
             const fila = document.createElement('tr');
             if (reg.esAnulado) fila.classList.add('registro-anulado');

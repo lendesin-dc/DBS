@@ -460,33 +460,32 @@ function guardarEnColaPendientes(registro) {
 
 // Revisa la cola y vacía los datos hacia Google Sheets uno por uno
 async function sincronizarColaPendientes() {
-  if (!navigator.onLine) return; // Si sigue sin internet, no hace nada
+  if (!navigator.onLine) return; 
   
   let pendientes = JSON.parse(localStorage.getItem('qr_pendientes_sincro')) || [];
   if (pendientes.length === 0) return;
   
-  console.log(`Conexión recuperada. Sincronizando ${pendientes.length} registros...`);
+  console.log(`Conexión recuperada. Sincronizando ${pendientes.length} registros en bloque...`);
   
-  const urlWebApp = URL_GOOGLE_APP;  //URL_GOOGLE_APP
+  const urlWebApp = "TU_URL_DE_GOOGLE_APPS_SCRIPT"; // Recuerda mantener tu URL real aquí
   
-  // Procesamos uno a uno de forma segura
-  for (let i = 0; i < pendientes.length; i++) {
-    try {
-      await fetch(urlWebApp, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pendientes[i])
-      });
-    } catch (e) {
-      // Si la red se cae a la mitad, detenemos el bucle para el próximo intento
-      return; 
-    }
-  }
+  // 1. Creamos un mapa de promesas para disparar TODOS los envíos en paralelo
+  const envios = pendientes.map(registro => {
+    return fetch(urlWebApp, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(registro)
+    }).catch(err => console.error("Error al sincronizar un registro individual:", err));
+  });
+
+  // 2. Esperamos a que todas las peticiones salgan del celular hacia la nube
+  await Promise.all(envios);
   
-  // Si todo se envió con éxito, vaciamos la cola de la memoria
+  // 3. Limpiamos el búfer local de inmediato para evitar reenvíos duplicados
   localStorage.removeItem('qr_pendientes_sincro');
-  alert("¡Sincronización Exitosa!\n\nLos registros capturados sin Wi-Fi ya están guardados en Google Sheets.");
+  
+  alert(`¡Sincronización Exitosa!\n\nSe han subido ${pendientes.length} registros pendientes.`);
 }
 
 function enviarAGoogleSheets(registro) {

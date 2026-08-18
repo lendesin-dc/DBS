@@ -135,10 +135,10 @@
   
   <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
     <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
-    <div id="exito-sku" style="font-size: 3.7rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+    <div id="exito-sku" style="font-size: 3.3rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
     
     <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
-    <div id="exito-serie" style="font-size: 3.7rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+    <div id="exito-serie" style="font-size: 3.3rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
   </div>
   <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
 </div>
@@ -448,15 +448,36 @@ function limpiarPantallaCompleta() {
 
 // Guarda los registros acumulados durante el corte de Wi-Fi
 function guardarEnColaPendientes(registro) {
-  let pendientes = JSON.parse(localStorage.getItem('qr_pendientes_sincro')) || [];
+  // 1. Nos aseguramos de leer correctamente lo que ya existe, si está vacío creamos un arreglo limpio
+  let pendientes = [];
+  try {
+    const datosLocales = localStorage.getItem('qr_pendientes_sincro');
+    if (datosLocales) {
+      pendientes = JSON.parse(datosLocales);
+    }
+  } catch (e) {
+    console.error("Error leyendo el almacenamiento local, reiniciando cola:", e);
+    pendientes = [];
+  }
+
+  // 2. Si por algún motivo la lectura no devolvió un arreglo válido, lo forzamos a ser uno
+  if (!Array.isArray(pendientes)) {
+    pendientes = [];
+  }
   
-  // Evitamos meter duplicados exactos en la cola de espera
-  if (!pendientes.some(p => p.identificadorUnico === registro.identificadorUnico)) {
+  // 3. Verificamos si este código específico ya está en la lista para evitar duplicaciones
+  const yaExiste = pendientes.some(p => p.identificadorUnico === registro.identificadorUnico);
+  
+  if (!yaExiste) {
+    // 4. ¡EL ARREGLO CRÍTICO!: Añadimos el nuevo registro al final del arreglo existente
     pendientes.push(registro);
+    
+    // 5. Guardamos la lista completa actualizada de vuelta en la memoria física del celular
     localStorage.setItem('qr_pendientes_sincro', JSON.stringify(pendientes));
-    console.log(`Búfer: ${pendientes.length} registros esperando conexión.`);
+    console.log(`Búfer actualizado: ${pendientes.length} registros en espera.`);
   }
 }
+
 
 // Revisa la cola y vacía los datos hacia Google Sheets uno por uno
 async function sincronizarColaPendientes() {

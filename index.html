@@ -31,7 +31,7 @@
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
         .franja-lector label { display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
-        .input-qr { width: 100%; padding: 5px; font-size: 16px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
+        .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
@@ -209,7 +209,7 @@ function sonarBip750Hz() {
     oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
     
     // Subimos de 0.2 a 0.6 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
     
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.12);
@@ -227,7 +227,7 @@ function mostrarConfirmacionGigante(sku, serie) {
   const modalExito = document.getElementById('modal-exito-gigante');
   modalExito.style.display = "flex";
   
-  // Temporizador para que se desvanezca solo a los 2000 milisegundos (2 segundos)
+  // Temporizador para que se desvanezca solo a los 3000 milisegundos (2 segundos)
   setTimeout(() => {
     modalExito.style.display = "none";
   }, 2000);
@@ -446,129 +446,119 @@ function limpiarPantallaCompleta() {
     document.getElementById('txt-lector').focus();
 }
 
-// Guarda los registros acumulados durante el corte de Wi-Fi
-function guardarEnColaPendientes(registro) {
-  // 1. Nos aseguramos de leer correctamente lo que ya existe, si está vacío creamos un arreglo limpio
-  let pendientes = [];
-  try {
-    const datosLocales = localStorage.getItem('qr_pendientes_sincro');
-    if (datosLocales) {
-      pendientes = JSON.parse(datosLocales);
-    }
-  } catch (e) {
-    console.error("Error leyendo el almacenamiento local, reiniciando cola:", e);
-    pendientes = [];
-  }
+function enviarAGoogleSheets(objetoRegistro) {
+  // Buscamos la fila superior de la tabla (el último escaneo realizado)
+  const primeraFila = document.querySelector("#tabla-cuerpo tr:first-child");
+  const botonAnular = primeraFila ? primeraFila.querySelector(".btn-anular") : null;
 
-  // 2. Si por algún motivo la lectura no devolvió un arreglo válido, lo forzamos a ser uno
-  if (!Array.isArray(pendientes)) {
-    pendientes = [];
-  }
-  
-  // 3. Verificamos si este código específico ya está en la lista para evitar duplicaciones
-  const yaExiste = pendientes.some(p => p.identificadorUnico === registro.identificadorUnico);
-  
-  if (!yaExiste) {
-    // 4. ¡EL ARREGLO CRÍTICO!: Añadimos el nuevo registro al final del arreglo existente
-    pendientes.push(registro);
-    
-    // 5. Guardamos la lista completa actualizada de vuelta en la memoria física del celular
-    localStorage.setItem('qr_pendientes_sincro', JSON.stringify(pendientes));
-    console.log(`Búfer actualizado: ${pendientes.length} registros en espera.`);
-  }
-}
-
-
-// Revisa la cola y vacía los datos hacia Google Sheets uno por uno
-async function sincronizarColaPendientes() {
-  if (!navigator.onLine) return; 
-  
-  let pendientes = JSON.parse(localStorage.getItem('qr_pendientes_sincro')) || [];
-  if (pendientes.length === 0) return;
-  
-  console.log(`Conexión recuperada. Sincronizando ${pendientes.length} registros en bloque...`);
-  
-  const urlWebApp = URL_GOOGLE_APP; // Recuerda mantener tu URL real aquí
-  
-  // 1. Creamos un mapa de promesas para disparar TODOS los envíos en paralelo
-  const envios = pendientes.map(registro => {
-    return fetch(urlWebApp, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(registro)
-    }).catch(err => console.error("Error al sincronizar un registro individual:", err));
-  });
-
-  // 2. Esperamos a que todas las peticiones salgan del celular hacia la nube
-  await Promise.all(envios);
-  
-  // 3. Limpiamos el búfer local de inmediato para evitar reenvíos duplicados
-  localStorage.removeItem('qr_pendientes_sincro');
-  
-  alert(`¡Sincronización Exitosa!\n\nSe han subido ${pendientes.length} registros pendientes.`);
-}
-
-function enviarAGoogleSheets(registro) {
-  // 1. Si el celular está en Modo Avión o sin señal, guardamos en el buffer de inmediato
+  // CAMINO OFFLINE: Si el celular está en modo avión
   if (!navigator.onLine) {
-    console.warn("Sin conexión detectada. Guardando en cola de espera.");
-    guardarEnColaPendientes(registro);
+    console.warn("Dispositivo Offline. El botón se mantiene en 'Anular' (Amarillo).");
+    objetoRegistro.sincronizado = false;
+    guardarEnMemoriaLocal(); // Guardamos el estado 'no sincronizado' en la RAM/Storage
     return;
   }
 
-  // 2. Si hay red, intentamos el envío normal por fetch
-  const urlWebApp = URL_GOOGLE_APP; // Coloca aquí tu URL real
-  
-  fetch(urlWebApp, {
+  // CAMINO ONLINE: Intento de transmisión normal
+  fetch(URL_GOOGLE_APP, {
     method: "POST",
     mode: "no-cors",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(registro)
+    body: JSON.stringify(objetoRegistro)
   })
   .then(() => {
-    console.log("Registro enviado con éxito a la nube.");
+    // ¡ÉXITO DE SUBIDA! Cambiamos a mayúsculas, quitamos amarillo y actualizamos memoria
+    console.log("Transmisión exitosa. Cambiando estado a ANULAR.");
+    objetoRegistro.sincronizado = true;
+    guardarEnMemoriaLocal();
+
+    if (botonAnular && botonAnular.innerText === "Anular") {
+      botonAnular.innerText = "ANULAR";
+      botonAnular.style.cssText = ""; // Limpia el color amarillo instantáneamente
+    }
   })
-  .catch(error => {
-    // Si el fetch falla por microcortes de Wi-Fi, también lo protegemos en el buffer
-    console.error("Error de red en fetch, respaldando código:", error);
-    guardarEnColaPendientes(registro);
+  .catch(err => {
+    console.error("Fallo de red al transmitir remotamente:", err);
+    objetoRegistro.sincronizado = false;
+    guardarEnMemoriaLocal();
   });
 }
 
 
 function actualizarTablaVista() {
-    const tbody = document.getElementById('tabla-cuerpo');
-    tbody.innerHTML = "";
-        historialLecturas.forEach(reg => {
-            const fila = document.createElement('tr');
-            if (reg.esAnulado) fila.classList.add('registro-anulado');
+  const tbody = document.getElementById('tabla-cuerpo');
+  tbody.innerHTML = "";
+  
+  historialLecturas.forEach(reg => {
+    const fila = document.createElement('tr');
+    if (reg.esAnulado) fila.classList.add('registro-anulado');
+    
+    // DETERMINACIÓN INDUSTRIAL DE ESTADO VISUAL
+    // Si el registro no tiene la propiedad 'sincronizado' y estamos sin red, nace en minúscula y amarillo
+    const yaSincronizado = reg.sincronizado === true;
+    const botonTexto = yaSincronizado ? "ANULAR" : "Anular";
+    const botonEstilo = yaSincronizado ? "" : "background-color: #fef08a; color: #854d0e; font-weight: bold; border: 1px solid #ca8a04;";
 
-            fila.innerHTML = `
-                <td>${reg.fechaHora}</td>
-                <td>${reg.origen}</td>
-                <td><strong>${reg.estadoOrigen}</strong></td>
-                <td>${reg.qrCompleto}</td>
-                <td>${reg.sku}</td>
-                <td>${reg.serie}</td>
-                <td><strong>${reg.estadoDestino}</strong></td>
-                <td>${reg.destino}</td>
-                <td>
-                    ${ (!reg.esAnulado) ? 
-                    `<button class="btn-anular" onclick="solicitarAnulacion(${reg.id})">Anular</button>` : 
-                    `<span class="badge-anulado">Anulado</span>` }
-                </td>
-            `;
-            tbody.appendChild(fila);
-        });
+    fila.innerHTML = `
+      <td>${reg.fechaHora}</td>
+      <td>${reg.origen}</td>
+      <td><strong>${reg.estadoOrigen}</strong></td>
+      <td>${reg.qrCompleto}</td>
+      <td>${reg.sku}</td>
+      <td>${reg.serie}</td>
+      <td><strong>${reg.estadoDestino}</strong></td>
+      <td>${reg.destino}</td>
+      <td>
+        ${ (!reg.esAnulado) ?
+          `<button class="btn-anular" style="${botonEstilo}" onclick="solicitarAnulacion(${reg.id})">${botonTexto}</button>` :
+          `<span class="badge-anulado">${reg.estadoDestino === 'ANULADO' ? 'Anulado' : 'ANULADO'}</span>` }
+      </td>
+    `;
+    tbody.appendChild(fila);
+  });
+}
+
+function sincronizarHistorialPendiente() {
+  if (!navigator.onLine) return;
+
+  console.log("Señal restablecida. Escaneando botones 'Anular' pendientes...");
+  
+  // Recorremos nuestro arreglo local buscando los que se quedaron sin sincronizar
+  historialLecturas.forEach((reg, index) => {
+    if (reg.sincronizado !== true && !reg.esAnulado) {
+      
+      fetch(URL_GOOGLE_APP, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reg)
+      })
+      .then(() => {
+        // Marcamos como completado
+        reg.sincronizado = true;
+        guardarEnMemoriaLocal();
+        
+        // Buscamos el botón específico en la pantalla para actualizarlo en vivo
+        const filasHTML = document.querySelectorAll("#tabla-cuerpo tr");
+        if (filasHTML[index]) {
+          const boton = filasHTML[index].querySelector(".btn-anular");
+          if (boton && boton.innerText === "Anular") {
+            boton.innerText = "ANULAR";
+            boton.style.cssText = ""; // Remueve el amarillo
+          }
+        }
+      })
+      .catch(e => console.error("Reintento fallido para registro id: " + reg.id, e));
     }
+  });
+}
 
-// Detecta el instante exacto en que vuelve el internet en el celular
-window.addEventListener('online', sincronizarColaPendientes);
-
-// Ejecuta una revisión de seguridad cada vez que se abre o refresca la app
-document.addEventListener("DOMContentLoaded", sincronizarColaPendientes);
-
+// Disparadores nativos del dispositivo móvil
+window.addEventListener('online', sincronizarHistorialPendiente);
+document.addEventListener("DOMContentLoaded", () => {
+  // Por si el celular inicia con registros pendientes acumulados de turnos anteriores
+  setTimeout(sincronizarHistorialPendiente, 1500);
+});
 
 </script>
 

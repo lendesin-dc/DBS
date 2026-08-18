@@ -131,16 +131,16 @@
 <!-- VENTANA EMERGENTE GIGANTE PARA CONFIRMACIÓN DE LECTURA -->
 <div id="modal-exito-gigante" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
   <div style="font-size: 8rem; margin-bottom: 0px;">✅</div>
-  <div style="font-size: 2.2rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
+  <div style="font-size: 2.0rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
   
   <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-    <div style="font-size: 1.5rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
-    <div id="exito-sku" style="font-size: 4.5rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+    <div style="font-size: 1.3rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
+    <div id="exito-sku" style="font-size: 4.0rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
     
-    <div style="font-size: 1.5rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
-    <div id="exito-serie" style="font-size: 4.5rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+    <div style="font-size: 1.3rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+    <div id="exito-serie" style="font-size: 4.0rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
   </div>
-  <div style="font-size: 1.2rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+  <div style="font-size: 1.1rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
 </div>
 
 
@@ -209,7 +209,7 @@ function sonarBip750Hz() {
     oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
     
     // Subimos de 0.2 a 0.6 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime);
     
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.12);
@@ -227,7 +227,7 @@ function mostrarConfirmacionGigante(sku, serie) {
   const modalExito = document.getElementById('modal-exito-gigante');
   modalExito.style.display = "flex";
   
-  // Temporizador para que se desvanezca solo a los 3000 milisegundos (2 segundos)
+  // Temporizador para que se desvanezca solo a los 2000 milisegundos (2 segundos)
   setTimeout(() => {
     modalExito.style.display = "none";
   }, 2000);
@@ -446,15 +446,76 @@ function limpiarPantallaCompleta() {
     document.getElementById('txt-lector').focus();
 }
 
-function enviarAGoogleSheets(objetoRegistro) {
-    fetch(URL_GOOGLE_APP, {
+// Guarda los registros acumulados durante el corte de Wi-Fi
+function guardarEnColaPendientes(registro) {
+  let pendientes = JSON.parse(localStorage.getItem('qr_pendientes_sincro')) || [];
+  
+  // Evitamos meter duplicados exactos en la cola de espera
+  if (!pendientes.some(p => p.identificadorUnico === registro.identificadorUnico)) {
+    pendientes.push(registro);
+    localStorage.setItem('qr_pendientes_sincro', JSON.stringify(pendientes));
+    console.log(`Búfer: ${pendientes.length} registros esperando conexión.`);
+  }
+}
+
+// Revisa la cola y vacía los datos hacia Google Sheets uno por uno
+async function sincronizarColaPendientes() {
+  if (!navigator.onLine) return; // Si sigue sin internet, no hace nada
+  
+  let pendientes = JSON.parse(localStorage.getItem('qr_pendientes_sincro')) || [];
+  if (pendientes.length === 0) return;
+  
+  console.log(`Conexión recuperada. Sincronizando ${pendientes.length} registros...`);
+  
+  const urlWebApp = URL_GOOGLE_APP;  //URL_GOOGLE_APP
+  
+  // Procesamos uno a uno de forma segura
+  for (let i = 0; i < pendientes.length; i++) {
+    try {
+      await fetch(urlWebApp, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(objetoRegistro)
-    })
-    .catch(err => console.error("Fallo de red al transmitir remotamente:", err));
+        body: JSON.stringify(pendientes[i])
+      });
+    } catch (e) {
+      // Si la red se cae a la mitad, detenemos el bucle para el próximo intento
+      return; 
+    }
+  }
+  
+  // Si todo se envió con éxito, vaciamos la cola de la memoria
+  localStorage.removeItem('qr_pendientes_sincro');
+  alert("¡Sincronización Exitosa!\n\nLos registros capturados sin Wi-Fi ya están guardados en Google Sheets.");
 }
+
+function enviarAGoogleSheets(registro) {
+  // 1. Si el celular está en Modo Avión o sin señal, guardamos en el buffer de inmediato
+  if (!navigator.onLine) {
+    console.warn("Sin conexión detectada. Guardando en cola de espera.");
+    guardarEnColaPendientes(registro);
+    return;
+  }
+
+  // 2. Si hay red, intentamos el envío normal por fetch
+  const urlWebApp = URL_GOOGLE_APP; // Coloca aquí tu URL real
+  
+  fetch(urlWebApp, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(registro)
+  })
+  .then(() => {
+    console.log("Registro enviado con éxito a la nube.");
+  })
+  .catch(error => {
+    // Si el fetch falla por microcortes de Wi-Fi, también lo protegemos en el buffer
+    console.error("Error de red en fetch, respaldando código:", error);
+    guardarEnColaPendientes(registro);
+  });
+}
+
 
 function actualizarTablaVista() {
     const tbody = document.getElementById('tabla-cuerpo');
@@ -481,6 +542,14 @@ function actualizarTablaVista() {
             tbody.appendChild(fila);
         });
     }
+
+// Detecta el instante exacto en que vuelve el internet en el celular
+window.addEventListener('online', sincronizarColaPendientes);
+
+// Ejecuta una revisión de seguridad cada vez que se abre o refresca la app
+document.addEventListener("DOMContentLoaded", sincronizarColaPendientes);
+
+
 </script>
 
 </body>

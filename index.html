@@ -317,64 +317,65 @@ function apagarCamaraBodega() {
 
 // 7. LÓGICA DE NEGOCIO ORIGINAL INTEGRADA
 function procesarLectura(evento) {
- if (evento.key !== 'Enter') return;
- const input = document.getElementById('txt-lector');
- const cadenaQR = input.value.trim();
- if (cadenaQR === "") return;
- if (!cadenaQR.includes('#')) {
-   alert("¡CÓDIGO NO VÁLIDO!\n\nAl código le falta el separador #).\n\nPor favor, intente leer nuevamente.");
-   input.value = "";
-   return;
- }
- 
- const segmentos = cadenaQR.split('#');
- const skuExtraido = segmentos[0] || 'ERROR';
- const serieExtraida = segmentos[1] || 'ERROR';
- const estadoDestinoExtraido = segmentos[2] || 'ERROR';
- const momentoActual = Date.now();
- 
- const registroDuplicado = historialLecturas.find(item => 
-   item.serie === serieExtraida && 
-   item.esAnulado === false &&
-   item.estadoOrigen !== 'ANULADO'
- );
- 
- if (registroDuplicado) {
-   const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-   if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
-     const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
-     alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
-     input.value = "";
-     return;
-   }
- }
- 
- const ahora = new Date(momentoActual);
- const año = ahora.getFullYear();
- const mes = String(ahora.getMonth() + 1).padStart(2, '0');
- const dia = String(ahora.getDate()).padStart(2, '0');
- const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
- const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
- 
- const nuevoRegistro = {
-   id: momentoActual,
-   fechaHora: timestampStr,
-   origen: configuracionActual.origen,
-   estadoOrigen: configuracionActual.estOrigen,
-   qrCompleto: cadenaQR,
-   sku: skuExtraido,
-   serie: serieExtraida,
-   estadoDestino: estadoDestinoExtraido,
-   destino: configuracionActual.destino,
-   esAnulado: false
- };
- 
- historialLecturas.unshift(nuevoRegistro);
- guardarEnMemoriaLocal();
- actualizarTablaVista();
- enviarAGoogleSheets(nuevoRegistro);
- mostrarConfirmacionGigante(skuExtraido, serieExtraida);
- input.value = "";
+  if (evento.key !== 'Enter') return;
+  const input = document.getElementById('txt-lector');
+  const cadenaQR = input.value.trim();
+  if (cadenaQR === "") return;
+  if (!cadenaQR.includes('#')) {
+    alert("¡CÓDIGO NO VÁLIDO!\n\nAl código le falta el separador #.\n\nPor favor, intente leer nuevamente.");
+    input.value = "";
+    return;
+  }
+  
+  // CORRECCIÓN CRÍTICA DE ÍNDICES:
+  const segmentos = cadenaQR.split('#');
+  const skuExtraido = segmentos[0] || 'ERROR';           // [0] obtiene el SKU
+  const serieExtraida = segmentos[1] || 'ERROR';         // [1] obtiene la Serie
+  const estadoDestinoExtraido = segmentos[2] || 'ERROR';  // [2] obtiene el Estado
+  const momentoActual = Date.now();
+  
+  const registroDuplicado = historialLecturas.find(item => 
+    item.serie === serieExtraida && 
+    item.esAnulado === false &&
+    item.estadoOrigen !== 'ANULADO'
+  );
+  
+  if (registroDuplicado) {
+    const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+    if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
+      const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
+      alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
+      input.value = "";
+      return;
+    }
+  }
+  
+  const ahora = new Date(momentoActual);
+  const año = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
+  const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
+  
+  const nuevoRegistro = {
+    id: momentoActual,
+    fechaHora: timestampStr,
+    origen: configuracionActual.origen,
+    estadoOrigen: configuracionActual.estOrigen,
+    qrCompleto: cadenaQR,
+    sku: skuExtraido,
+    serie: serieExtraida,
+    estadoDestino: estadoDestinoExtraido,
+    destino: configuracionActual.destino,
+    esAnulado: false
+  };
+  
+  historialLecturas.unshift(nuevoRegistro);
+  guardarEnMemoriaLocal();
+  actualizarTablaVista();
+  enviarAGoogleSheets(nuevoRegistro);
+  mostrarConfirmacionGigante(skuExtraido, serieExtraida);
+  input.value = "";
 }
 
 function solicitarAnulacion(idRegistro) {

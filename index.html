@@ -151,355 +151,295 @@
 
 <!-- Reemplaza desde aquí hasta el final de tu archivo -->
 <script>
+<script>
 // 1. CONFIGURACIÓN COMPLETA DE TU ENTORNO REMOTO DE GOOGLE
-const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwL9SZx5iv2zF74lQ0-5B-KOqbidiz2Ix4vTxQTzzG4QTYIxieSBAwg3DmvtDU5TEmdLA/exec"; 
+const URL_GOOGLE_APP = "https://google.com"; 
 const MINUTOS_RESTRICCION_DUPLICADO = 5;
 
 let configuracionActual = {
-    origen: 'C-328',
-    estOrigen: 'E',
-    destino: 'B-01'
+ origen: 'C-328',
+ estOrigen: 'E',
+ destino: 'B-01'
 };
+
 let historialLecturas = JSON.parse(localStorage.getItem('historial_bodega')) || [];
 
 // Variables globales para el control estricto de memoria de la cámara
 let streamActivoBodega = null;
-let bucleAnalisisBodega = null;
+let bucleEscaneo = null; // Corregido el nombre para consistencia
 let detectorNativoBodega = null;
-// Variable global para reutilizar el mismo canal de audio ya aprobado por el usuario
 let miAudioContextIndustrial = null;
 
-
 window.onload = function() {
-    actualizarTablaVista();
-    sincronizarMotorHardware(); // Inicializa el detector al cargar
-
-       // Foco manual controlado SOLO al iniciar la app
-    const input = document.getElementById('txt-lector');
-    if (input) input.focus();
+ actualizarTablaVista();
+ sincronizarMotorHardware(); // Inicializa el detector al cargar
+ const input = document.getElementById('txt-lector');
+ if (input) input.focus();
 };
 
 function cambiarSeleccion(botonPresionado, propiedad) {
-    const contenedorGrupo = botonPresionado.parentElement;
-    const botonesDelGrupo = contenedorGrupo.querySelectorAll('.btn-opcion');
-    botonesDelGrupo.forEach(btn => btn.classList.remove('activo'));
-    botonPresionado.classList.add('activo');
-    configuracionActual[propiedad] = botonPresionado.innerText;
-//    document.getElementById('txt-lector').focus();
+ const contenedorGrupo = botonPresionado.parentElement;
+ const botonesDelGrupo = contenedorGrupo.querySelectorAll('.btn-opcion');
+ botonesDelGrupo.forEach(btn => btn.classList.remove('activo'));
+ botonPresionado.classList.add('activo');
+ configuracionActual[propiedad] = botonPresionado.innerText;
 }
 
-// 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz)
-// 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz) - OPTIMIZADA MÓVIL
+// 2. CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz) - OPTIMIZADA MÓVIL
 function sonarBip750Hz() {
-  try {
-    // 1. Si no existe el contexto, lo creamos (Ojo: subimos volumen a 0.6 para la bodega)
-    if (!miAudioContextIndustrial) {
-      miAudioContextIndustrial = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    
-    const audioCtx = miAudioContextIndustrial;
-
-    // 2. TRUCO MÓVIL: Si el celular lo suspendió, lo obligamos a despertar
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
-    
-    // Subimos de 0.2 a 0.6 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
-    
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.12);
-  } catch (e) { 
-    console.error("Audio bloqueado:", e); 
-  }
+ try {
+   if (!miAudioContextIndustrial) {
+     miAudioContextIndustrial = new (window.AudioContext || window.webkitAudioContext)();
+   }
+   const audioCtx = miAudioContextIndustrial;
+   if (audioCtx.state === 'suspended') {
+     audioCtx.resume();
+   }
+   const oscillator = audioCtx.createOscillator();
+   const gainNode = audioCtx.createGain();
+   
+   oscillator.connect(gainNode);
+   gainNode.connect(audioCtx.destination);
+   
+   oscillator.type = 'sine';
+   oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
+   gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+   
+   oscillator.start();
+   oscillator.stop(audioCtx.currentTime + 0.12);
+ } catch (e) { 
+   console.error("Audio bloqueado:", e); 
+ }
 }
-
 
 function mostrarConfirmacionGigante(sku, serie) {
-  // Inyectamos los textos en mayúsculas y de forma masiva
-  document.getElementById('exito-sku').innerText = String(sku).toUpperCase();
-  document.getElementById('exito-serie').innerText = String(serie).toUpperCase();
-  
-  const modalExito = document.getElementById('modal-exito-gigante');
-  modalExito.style.display = "flex";
-  
-  // Temporizador para que se desvanezca solo a los 3000 milisegundos (2 segundos)
-  setTimeout(() => {
-    modalExito.style.display = "none";
-  }, 2000);
+ document.getElementById('exito-sku').innerText = String(sku).toUpperCase();
+ document.getElementById('exito-serie').innerText = String(serie).toUpperCase();
+ 
+ const modalExito = document.getElementById('modal-exito-gigante');
+ modalExito.style.display = "flex";
+ 
+ setTimeout(() => {
+   modalExito.style.display = "none";
+ }, 2000);
 }
 
-
-// 3. NUEVA FUNCIÓN: COMPROBACIÓN NATIVA DE DISPOSITIVOS
+// 3. COMPROBACIÓN NATIVA DE DISPOSITIVOS Y ACTIVACIÓN DE TEXTO-BOTÓN
 function sincronizarMotorHardware() {
-    if ('BarcodeDetector' in window) {
-        detectorNativoBodega = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
-        // Modificamos visualmente el label azul para que el operador sepa que puede usar la cámara
-        const labelLector = document.querySelector('label[for="txt-lector"]');
-        if (labelLector) {
-            labelLector.innerHTML = "📸 LECTURA QR-Serial (Presione aquí):";
-            labelLector.style.cursor = "pointer";
-            labelLector.style.textDecoration = "underline";
-            labelLector.onclick = encenderCamaraBodega;
-        }
-    }
+ if ('BarcodeDetector' in window) {
+   detectorNativoBodega = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
+   const labelLector = document.querySelector('label[for="txt-lector"]');
+   if (labelLector) {
+     labelLector.innerHTML = " 📸 LECTURA QR-Serial (Presione aquí para escanear):";
+     labelLector.style.cursor = "pointer";
+     labelLector.style.textDecoration = "underline";
+     labelLector.style.color = "#0d6efd"; // Color azul para denotar que es clickeable
+     labelLector.onclick = encenderCamaraBodega;
+   }
+ }
 }
-
-    
-// 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA
-
-// 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
+ 
+// 4. TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA
 async function encenderCamaraBodega() {
-    // 1. Escondemos el teclado de forma forzada
-    const inputReal = document.getElementById('txt-lector');
+ const inputReal = document.getElementById('txt-lector');
+ if (inputReal) {
+   inputReal.blur();
+ }
+ sonarBip750Hz(); 
+ 
+ let modal = document.getElementById('modal-escaner');
+ if (!modal) {
+   modal = document.createElement('div');
+   modal.id = 'modal-escaner';
+   modal.style = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:flex-start; padding-top:40px; flex-direction:column;";
+   modal.innerHTML = `
+     <div style="width:300px; height:300px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+       <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+       <div id="laser-guia" style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.7); box-shadow:0 0 4px #ff0000; pointer-events:none; z-index:10;"></div>
+     </div>
+     <button onclick="apagarCamaraBodega()" style="margin-top:20px; padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"> Cancelar Escaneo</button>
+   `;
+   document.body.appendChild(modal);
+ }
 
-    if (inputReal) {
-        inputReal.blur();
-    }
-    // Al tocar el botón con el dedo, disparamos esto para habilitar el permiso del parlante
-    sonarBip750Hz(); 
-  
-    // 2. Si no existe la interfaz del visor en el HTML, la inyectamos dinámicamente
-    let modal = document.getElementById('modal-escaner');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-escaner';
-        // AJUSTE: Cambiamos center por flex-start y agregamos padding-top para SUBIR la imagen de la cámara
-        modal.style = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:flex-start; padding-top:40px; flex-direction:column;";
-        modal.innerHTML = `
-            <div style="width:300px; height:300px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
-                <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-                <div id="laser-guia" style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.7); box-shadow:0 0 4px #ff0000; pointer-events:none; z-index:10;"></div>
-            </div>
-            <button onclick="apagarCamaraBodega()" style="margin-top:20px; padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">❌ Cancelar Escaneo</button>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    // 3. RETRASO CRÍTICO: Esperamos 150ms a que el teclado baje antes de renderizar la cámara
-    setTimeout(async () => {
-        modal.style.display = "flex"; 
-        const video = document.getElementById('video-bodega-stream');
-
-        try {
-            streamActivoBodega = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-                audio: false
-            });
-            video.srcObject = streamActivoBodega;
-            bucleEscaneo = setInterval(analizarCuadroEnVivo, 160); 
-        } catch (err) {
-            alert("Acceso a la cámara trasera denegado o no disponible.");
-            modal.style.display = "none";
-        }
-    }, 350); // 150 milisegundos de espera para limpiar el teclado de la pantalla
+ setTimeout(async () => {
+   modal.style.display = "flex"; 
+   const video = document.getElementById('video-bodega-stream');
+   try {
+     streamActivoBodega = await navigator.mediaDevices.getUserMedia({
+       video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+       audio: false
+     });
+     video.srcObject = streamActivoBodega;
+     bucleEscaneo = setInterval(analizarCuadroEnVivo, 160); 
+   } catch (err) {
+     alert("Acceso a la cámara trasera denegado o no disponible.");
+     modal.style.display = "none";
+   }
+ }, 350);
 }
-
-    
-
-
-// 5. NUEVA FUNCIÓN: ANÁLISIS ACELERADO POR GPU (Filtra, Inyecta y ejecuta Enter)
+ 
+// 5. ANÁLISIS ACELERADO POR GPU
 async function analizarCuadroEnVivo() {
-    const video = document.getElementById('video-bodega-stream');
-    if (video && video.readyState === video.HAVE_ENOUGH_DATA && detectorNativoBodega) {
-        try {
-            const codigos = await detectorNativoBodega.detect(video);
-            if (codigos.length > 0) {
-                // ¡CAPTURA EXITOSA!
-                sonarBip750Hz();
-                
-                const input = document.getElementById('txt-lector');
-                input.value = codigos[0].rawValue; // Setea la cadena compleja (ej: CH-5050NG#2605000002#B)
-                
-                apagarCamaraBodega(); // Apaga inmediatamente el hardware liberando RAM
-
-                // Simulamos la pulsación física de la tecla Enter para disparar tu lógica nativa de guardado
-                const fakeEvent = { key: 'Enter' };
-                procesarLectura(fakeEvent);
-            }
-        } catch (e) { /* Silencio cuadro a cuadro */ }
-    }
+ const video = document.getElementById('video-bodega-stream');
+ if (video && video.readyState === video.HAVE_ENOUGH_DATA && detectorNativoBodega) {
+   try {
+     const codigos = await detectorNativoBodega.detect(video);
+     if (codigos.length > 0) {
+       sonarBip750Hz();
+       const input = document.getElementById('txt-lector');
+       input.value = codigos[0].rawValue; 
+       apagarCamaraBodega(); 
+       const fakeEvent = { key: 'Enter' };
+       procesarLectura(fakeEvent);
+     }
+   } catch (e) { /* Silencio cuadro a cuadro */ }
+ }
 }
 
-// 6. NUEVA FUNCIÓN: APAGADO Y CONTROL DE FOCO POS-ESCANEO
+// 6. APAGADO Y CONTROL DE FOCO POS-ESCANEO
 function apagarCamaraBodega() {
-    clearInterval(bucleEscaneo);
-    if (streamActivoBodega) {
-        streamActivoBodega.getTracks().forEach(track => track.stop());
-    }
-    const modal = document.getElementById('modal-escaner');
-    if (modal) modal.style.display = "none";
-    
-    // 🚀 EL TRUCO DE FOCO INDUSTRIAL:
-    // En lugar de hacer focus() en la caja de texto (lo que levantaría el teclado),
-    // buscamos el primer botón de "Anular" disponible en tu tabla azul.
-    const primerBotonAnular = document.querySelector('.btn-anular');
-    
-    if (primerBotonAnular) {
-        primerBotonAnular.focus(); // El foco se queda atrapado en el botón sin abrir el teclado
-        console.log("Teclado abajo. Foco posicionado en el botón Anular.");
-    } else {
-        // Fallback: Si la tabla está vacía y no hay botones, simplemente le quitamos 
-        // el foco a toda la página para asegurar que el teclado no se levante.
-        document.activeElement.blur();
-    }
+ clearInterval(bucleEscaneo);
+ if (streamActivoBodega) {
+   streamActivoBodega.getTracks().forEach(track => track.stop());
+ }
+ const modal = document.getElementById('modal-escaner');
+ if (modal) modal.style.display = "none";
+ 
+ const primerBotonAnular = document.querySelector('.btn-anular');
+ if (primerBotonAnular) {
+   primerBotonAnular.focus();
+   console.log("Teclado abajo. Foco posicionado en el botón Anular.");
+ } else {
+   document.activeElement.blur();
+ }
 }
 
-
-// --- TU LÓGICA DE NEGOCIO ORIGINAL INTEGRADA SINTÁCTICAMENTE ---
+// 7. LÓGICA DE NEGOCIO ORIGINAL INTEGRADA
 function procesarLectura(evento) {
-    if (evento.key !== 'Enter') return;
-    const input = document.getElementById('txt-lector');
-    const cadenaQR = input.value.trim();
-    if (cadenaQR === "") return;
-
-    if (!cadenaQR.includes('#')) {
-    alert("¡CÓDIGO NO VÁLIDO!\n\nAl código le falta el separador #).\n\nPor favor, intente leer nuevamente.");
-    input.value = "";
-    return;
-  }
-    
-    const segmentos = cadenaQR.split('#');
-    const skuExtraido = segmentos[0] || 'ERROR';
-    const serieExtraida = segmentos[1] || 'ERROR';
-    const estadoDestinoExtraido = segmentos[2] || 'ERROR';
-
-    const momentoActual = Date.now();
-    const registroDuplicado = historialLecturas.find(item => 
-        item.serie === serieExtraida && 
-        item.esAnulado === false &&
-        item.estadoOrigen !== 'ANULADO'
-    );
-    
-    if (registroDuplicado) {
-        const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-        if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
-            const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
-            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
-            input.value = "";
-     //       input.focus();
-            return;
-        }
-    }
-    
-    const ahora = new Date(momentoActual);
-    const año = ahora.getFullYear();
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const dia = String(ahora.getDate()).padStart(2, '0');
-    const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
-    const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
-    
-    const nuevoRegistro = {
-        id: momentoActual,
-        fechaHora: timestampStr,
-        origen: configuracionActual.origen,
-        estadoOrigen: configuracionActual.estOrigen,
-        qrCompleto: cadenaQR,
-        sku: skuExtraido,
-        serie: serieExtraida,
-        estadoDestino: estadoDestinoExtraido,
-        destino: configuracionActual.destino,
-        esAnulado: false
-    };
-    
-    historialLecturas.unshift(nuevoRegistro);
-    guardarEnMemoriaLocal();
-    actualizarTablaVista();
-    enviarAGoogleSheets(nuevoRegistro);
-
-    // DISPARADOR DEL CARTEL GIGANTE: Añade esta línea aquí abajo
-    mostrarConfirmacionGigante(skuExtraido, serieExtraida);
-
-
-    input.value = "";
-   // input.focus();
+ if (evento.key !== 'Enter') return;
+ const input = document.getElementById('txt-lector');
+ const cadenaQR = input.value.trim();
+ if (cadenaQR === "") return;
+ if (!cadenaQR.includes('#')) {
+   alert("¡CÓDIGO NO VÁLIDO!\n\nAl código le falta el separador #).\n\nPor favor, intente leer nuevamente.");
+   input.value = "";
+   return;
+ }
+ 
+ const segmentos = cadenaQR.split('#');
+ const skuExtraido = segmentos[0] || 'ERROR';
+ const serieExtraida = segmentos[1] || 'ERROR';
+ const estadoDestinoExtraido = segmentos[2] || 'ERROR';
+ const momentoActual = Date.now();
+ 
+ const registroDuplicado = historialLecturas.find(item => 
+   item.serie === serieExtraida && 
+   item.esAnulado === false &&
+   item.estadoOrigen !== 'ANULADO'
+ );
+ 
+ if (registroDuplicado) {
+   const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+   if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
+     const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
+     alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
+     input.value = "";
+     return;
+   }
+ }
+ 
+ const ahora = new Date(momentoActual);
+ const año = ahora.getFullYear();
+ const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+ const dia = String(ahora.getDate()).padStart(2, '0');
+ const horaFormateada = ahora.toLocaleTimeString('es-ES', { hour12: false });
+ const timestampStr = `${dia}/${mes}/${año} ${horaFormateada}`;
+ 
+ const nuevoRegistro = {
+   id: momentoActual,
+   fechaHora: timestampStr,
+   origen: configuracionActual.origen,
+   estadoOrigen: configuracionActual.estOrigen,
+   qrCompleto: cadenaQR,
+   sku: skuExtraido,
+   serie: serieExtraida,
+   estadoDestino: estadoDestinoExtraido,
+   destino: configuracionActual.destino,
+   esAnulado: false
+ };
+ 
+ historialLecturas.unshift(nuevoRegistro);
+ guardarEnMemoriaLocal();
+ actualizarTablaVista();
+ enviarAGoogleSheets(nuevoRegistro);
+ mostrarConfirmacionGigante(skuExtraido, serieExtraida);
+ input.value = "";
 }
 
 function solicitarAnulacion(idRegistro) {
-    const registro = historialLecturas.find(item => item.id === idRegistro);
-    if (registro && !registro.esAnulado) {
-        registro.esAnulado = true;
-        registro.estadoOrigen = "R"; 
-        registro.estadoDestino = "ANULADO"; 
-        registro.destino = "ANULA ID: " + String(idRegistro); 
-        guardarEnMemoriaLocal();
-        actualizarTablaVista();
-        enviarAGoogleSheets(registro);
-    }
-    document.getElementById('txt-lector').focus();
+ const registro = historialLecturas.find(item => item.id === idRegistro);
+ if (registro && !registro.esAnulado) {
+   registro.esAnulado = true;
+   registro.estadoOrigen = "R"; 
+   registro.estadoDestino = "ANULADO"; 
+   registro.destino = "ANULA ID: " + String(idRegistro); 
+   guardarEnMemoriaLocal();
+   actualizarTablaVista();
+   enviarAGoogleSheets(registro);
+ }
+ document.getElementById('txt-lector').focus();
 }
 
 function guardarEnMemoriaLocal() {
-    localStorage.setItem('historial_bodega', JSON.stringify(historialLecturas));
+ localStorage.setItem('historial_bodega', JSON.stringify(historialLecturas));
 }
 
 function limpiarPantallaCompleta() {
-    if(confirm("¿Desea limpiar la lista de la pantalla?\n(Esto no borrará los datos ya guardados en Google Sheets)")) {
-        historialLecturas = [];
-        localStorage.removeItem('historial_bodega');
-        actualizarTablaVista();
-    }
-    document.getElementById('txt-lector').focus();
+ if(confirm("¿Desea limpiar la lista de la pantalla?\n(Esto no borrará los datos ya guardados en Google Sheets)")) {
+   historialLecturas = [];
+   localStorage.removeItem('historial_bodega');
+   actualizarTablaVista();
+ }
+ document.getElementById('txt-lector').focus();
 }
 
 function enviarAGoogleSheets(objetoRegistro) {
-  // Buscamos la fila superior de la tabla (el último escaneo realizado)
   const primeraFila = document.querySelector("#tabla-cuerpo tr:first-child");
   const botonAnular = primeraFila ? primeraFila.querySelector(".btn-anular") : null;
 
-  // CAMINO OFFLINE: Si el celular está en modo avión
   if (!navigator.onLine) {
     console.warn("Dispositivo Offline. El botón se mantiene en 'Anular' (Amarillo).");
     objetoRegistro.sincronizado = false;
-    guardarEnMemoriaLocal(); // Guardamos el estado 'no sincronizado' en la RAM/Storage
+    guardarEnMemoriaLocal(); 
     return;
   }
 
-	// // CAMINO ONLINE: Intento de transmisión normal
-fetch(URL_GOOGLE_APP, {
-  method: "POST",
-  credentials: "include", 
-  redirect: "follow", // 🚀 Esto destraba la espera de Google
-  headers: { "Content-Type": "text/plain" }, 
-  body: JSON.stringify(objetoRegistro)
-})
-.then(response => {
-  if (!response.ok) throw new Error("Error de autenticación o red");
-  
-  console.log("Transmisión exitosa. Activando botón de anulación real.");
-  objetoRegistro.sincronizado = true;
-  guardarEnMemoriaLocal();
-  
-  // Cambiamos al estado operativo real (Rojo y Mayúsculas)
-  if (botonAnular) {
-    botonAnular.innerText = "ANULAR";
-    botonAnular.style.backgroundColor = "#d32f2f"; // Rojo de borrado/anulación
-    botonAnular.style.color = "white";
-  }
-})
-.catch(err => {
-  console.error("Fallo de red. Se mantiene en amarillo (Bloqueado):", err);
-  objetoRegistro.sincronizado = false;
-  guardarEnMemoriaLocal();
-});
-
-	  
-.catch(err => {
-  console.error("Fallo de red al transmitir remotamente:", err);
-  // Tu lógica offline existente se ejecuta de forma impecable si falla el login
-  objetoRegistro.sincronizado = false;
-  guardarEnMemoriaLocal();
-});
-
+  fetch(URL_GOOGLE_APP, {
+    method: "POST",
+    credentials: "include", 
+    redirect: "follow", 
+    headers: { "Content-Type": "text/plain" }, 
+    body: JSON.stringify(objetoRegistro)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Error de autenticación o red");
+    
+    console.log("Transmisión exitosa. Activando botón de anulación real.");
+    objetoRegistro.sincronizado = true;
+    guardarEnMemoriaLocal();
+    
+    if (botonAnular) {
+      botonAnular.innerText = "ANULAR";
+      botonAnular.style.backgroundColor = "#d32f2f"; 
+      botonAnular.style.color = "white";
+    }
+  })
+  .catch(err => {
+    console.error("Fallo de red. Se mantiene en amarillo (Bloqueado):", err);
+    objetoRegistro.sincronizado = false;
+    guardarEnMemoriaLocal();
+  });
 }
 
 function actualizarTablaVista() {
@@ -510,12 +450,10 @@ function actualizarTablaVista() {
     const fila = document.createElement('tr');
     if (reg.esAnulado) fila.classList.add('registro-anulado');
     
-    // DETERMINACIÓN INDUSTRIAL DE ESTADO VISUAL
-    // Si el registro no tiene la propiedad 'sincronizado' y estamos sin red, nace en minúscula y amarillo
     const yaSincronizado = reg.sincronizado === true;
     const botonTexto = yaSincronizado ? "ANULAR" : "Anular";
-    const botonEstilo = yaSincronizado ? "" : "background-color: #fef08a; color: #854d0e; font-weight: bold; border: 1px solid #ca8a04;";
-
+    const botonEstilo = yaSincronizado ? "background-color: #d32f2f; color: white; font-weight: bold; border: none; padding: 6px 12px; border-radius: 4px;" : "background-color: #fef08a; color: #854d0e; font-weight: bold; border: 1px solid #ca8a04; padding: 6px 12px; border-radius: 4px;";
+    
     fila.innerHTML = `
       <td>${reg.fechaHora}</td>
       <td>${reg.origen}</td>
@@ -537,16 +475,14 @@ function actualizarTablaVista() {
 
 function sincronizarHistorialPendiente() {
   if (!navigator.onLine) return;
-
   console.log("Señal restablecida. Sincronizando registros en amarillo...");
 
   historialLecturas.forEach((reg, index) => {
     if (reg.sincronizado !== true && !reg.esAnulado) {
-
       fetch(URL_GOOGLE_APP, {
         method: "POST",
         credentials: "include",
-        redirect: "follow", // 🚀 Evita que se cuelgue procesando el lote
+        redirect: "follow", 
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(reg)
       })
@@ -555,14 +491,13 @@ function sincronizarHistorialPendiente() {
         
         reg.sincronizado = true;
         guardarEnMemoriaLocal();
-
-        // Buscamos la fila en la pantalla de la tablet para mutar el botón a Rojo
+        
         const filasHTML = document.querySelectorAll("#tabla-cuerpo tr");
         if (filasHTML[index]) {
           const boton = filasHTML[index].querySelector(".btn-anular");
           if (boton) {
             boton.innerText = "ANULAR";
-            boton.style.backgroundColor = "#d32f2f"; // Pasa a Rojo operativo
+            boton.style.backgroundColor = "#d32f2f"; 
             boton.style.color = "white";
           }
         }
@@ -572,15 +507,10 @@ function sincronizarHistorialPendiente() {
   });
 }
 
-
-// Disparadores nativos del dispositivo móvil
 window.addEventListener('online', sincronizarHistorialPendiente);
 document.addEventListener("DOMContentLoaded", () => {
-  // Por si el celular inicia con registros pendientes acumulados de turnos anteriores
   setTimeout(sincronizarHistorialPendiente, 1500);
 });
-
 </script>
-
 </body>
 </html>

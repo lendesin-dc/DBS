@@ -463,30 +463,36 @@ function enviarAGoogleSheets(objetoRegistro) {
     guardarEnMemoriaLocal(); // Guardamos el estado 'no sincronizado' en la RAM/Storage
     return;
   }
+// CAMINO ONLINE: Intento de transmisión normal
+fetch(URL_GOOGLE_APP, {
+  method: "POST",
+  // 1. ELIMINA: mode: "no-cors" (Google lo rechazará)
+  // 2. AGREGA esto para mandar las cookies de la sesión activa de Gmail:
+  credentials: "include", 
+  headers: { "Content-Type": "text/plain" }, // Usar text/plain evita problemas de preflight CORS en Apps Script
+  body: JSON.stringify(objetoRegistro)
+})
+.then(response => {
+  // Opcional: Puedes verificar si Google te dio un código 401 o 403 de no autorizado
+  if (!response.ok) throw new Error("Error de autenticación o red");
+  
+  // ¡ÉXITO DE SUBIDA! Cambiamos a mayúsculas, quitamos amarillo y actualizamos memoria
+  console.log("Transmisión exitosa. Cambiando estado a ANULAR.");
+  objetoRegistro.sincronizado = true;
+  guardarEnMemoriaLocal();
+  
+  if (botonAnular && botonAnular.innerText === "Anular") {
+    botonAnular.innerText = "ANULAR";
+    botonAnular.style.cssText = ""; 
+  }
+})
+.catch(err => {
+  console.error("Fallo de red al transmitir remotamente:", err);
+  // Tu lógica offline existente se ejecuta de forma impecable si falla el login
+  objetoRegistro.sincronizado = false;
+  guardarEnMemoriaLocal();
+});
 
-  // CAMINO ONLINE: Intento de transmisión normal
-  fetch(URL_GOOGLE_APP, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(objetoRegistro)
-  })
-  .then(() => {
-    // ¡ÉXITO DE SUBIDA! Cambiamos a mayúsculas, quitamos amarillo y actualizamos memoria
-    console.log("Transmisión exitosa. Cambiando estado a ANULAR.");
-    objetoRegistro.sincronizado = true;
-    guardarEnMemoriaLocal();
-
-    if (botonAnular && botonAnular.innerText === "Anular") {
-      botonAnular.innerText = "ANULAR";
-      botonAnular.style.cssText = ""; // Limpia el color amarillo instantáneamente
-    }
-  })
-  .catch(err => {
-    console.error("Fallo de red al transmitir remotamente:", err);
-    objetoRegistro.sincronizado = false;
-    guardarEnMemoriaLocal();
-  });
 }
 
 

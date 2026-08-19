@@ -31,7 +31,7 @@
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
         .franja-lector label { display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
-        .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
+        .input-qr { width: 100%; padding: 5px; font-size: 20px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
@@ -98,15 +98,21 @@
     <!-- CUADRO DE LECTURA -->
     <!-- Modificación en tu franja-lector: Quitamos el autofocus rígido -->
 <div class="franja-lector">
-    <label for="txt-lector">LECTURA DE QR:</label>
+    <label for="txt-lector">LECTURA QR:</label>
     <input type="text" id="txt-lector" class="input-qr" placeholder="Digite aquí..." onkeypress="procesarLectura(event)">
 </div>
 
     <!-- TABLA DE HISTORIAL RESPONSIVA -->
-    <div class="panel-inferior">
-        <h3 style="margin:0; font-size:1.1rem;">Registros de la sesión</h3>
-        <button class="btn-limpiar" onclick="limpiarPantallaCompleta()">Limpiar Vista</button>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <h3 style="margin: 0; font-family: sans-serif;">Registros de la sesión</h3>
+    <!-- NUESTRO BOTÓN INTERRUPTOR INTERACTIVO -->
+    <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;">
+      📊 Ver SubTotales
+    </button>
+  </div>
+  <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" class="btn-limpiar">Limpiar Vista</button>
+</div>
     
     <div class="tabla-contenedor">
         <table id="tabla-registros">
@@ -130,15 +136,15 @@
 
 <!-- VENTANA EMERGENTE GIGANTE PARA CONFIRMACIÓN DE LECTURA -->
 <div id="modal-exito-gigante" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
-  <div style="font-size: 7rem; margin-bottom: 0px;">✅</div>
+  <div style="font-size: 6rem; margin-bottom: 0px;">✅</div>
   <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
   
   <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
     <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
-    <div id="exito-sku" style="font-size: 3.3rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+    <div id="exito-sku" style="font-size: 3.1rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
     
     <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
-    <div id="exito-serie" style="font-size: 3.3rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+    <div id="exito-serie" style="font-size: 3.1rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
   </div>
   <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
 </div>
@@ -164,6 +170,27 @@ let detectorNativoBodega = null;
 // Variable global para reutilizar el mismo canal de audio ya aprobado por el usuario
 let miAudioContextIndustrial = null;
 
+// Variable global para controlar qué tabla se renderiza ("listado" o "subtotales")
+let modoVistaActual = "listado";
+
+// Función que cambia el modo al presionar el botón
+function conmutarModoVista() {
+  const boton = document.getElementById('btn-cambiar-modo');
+  
+  if (modoVistaActual === "listado") {
+    modoVistaActual = "subtotales";
+    boton.innerText = "📋 Ver Listado";
+    boton.style.backgroundColor = "#4b5563"; // Gris para indicar el cambio
+  } else {
+    modoVistaActual = "listado";
+    boton.innerText = "📊 Ver SubTotales";
+    boton.style.backgroundColor = "#2563eb"; // Azul clásico
+  }
+  
+  // Redibujamos la tabla instantáneamente con el nuevo modo aplicado
+  actualizarTablaVista();
+}
+
 
 window.onload = function() {
     actualizarTablaVista();
@@ -183,7 +210,6 @@ function cambiarSeleccion(botonPresionado, propiedad) {
 //    document.getElementById('txt-lector').focus();
 }
 
-// 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz)
 // 2. NUEVA FUNCIÓN: CONFIRMACIÓN ACÚSTICA INDUSTRIAL (750 Hz) - OPTIMIZADA MÓVIL
 function sonarBip750Hz() {
   try {
@@ -206,13 +232,13 @@ function sonarBip750Hz() {
     gainNode.connect(audioCtx.destination);
     
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(750, audioCtx.currentTime);
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
     
-    // Subimos de 0.2 a 0.6 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+    // Subimos de 0.2 a 0.8 para que compita contra el ruido ambiental de las grúas horquilla
+    gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
     
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.12);
+    oscillator.stop(audioCtx.currentTime + 0.14);
   } catch (e) { 
     console.error("Audio bloqueado:", e); 
   }
@@ -227,7 +253,7 @@ function mostrarConfirmacionGigante(sku, serie) {
   const modalExito = document.getElementById('modal-exito-gigante');
   modalExito.style.display = "flex";
   
-  // Temporizador para que se desvanezca solo a los 3000 milisegundos (2 segundos)
+  // Temporizador para que se desvanezca solo a los 3500 milisegundos (3,5 segundos)
   setTimeout(() => {
     modalExito.style.display = "none";
   }, 2000);
@@ -241,7 +267,7 @@ function sincronizarMotorHardware() {
         // Modificamos visualmente el label azul para que el operador sepa que puede usar la cámara
         const labelLector = document.querySelector('label[for="txt-lector"]');
         if (labelLector) {
-            labelLector.innerHTML = "📸 LECTURA QR-Serial (Presione aquí):";
+            labelLector.innerHTML = "📸 LECTURA QR-Serie (Presione)";
             labelLector.style.cursor = "pointer";
             labelLector.style.textDecoration = "underline";
             labelLector.onclick = encenderCamaraBodega;
@@ -291,12 +317,12 @@ async function encenderCamaraBodega() {
                 audio: false
             });
             video.srcObject = streamActivoBodega;
-            bucleEscaneo = setInterval(analizarCuadroEnVivo, 160); 
+            bucleEscaneo = setInterval(analizarCuadroEnVivo, 180); 
         } catch (err) {
             alert("Acceso a la cámara trasera denegado o no disponible.");
             modal.style.display = "none";
         }
-    }, 350); // 150 milisegundos de espera para limpiar el teclado de la pantalla
+    }, 400); // 150 milisegundos de espera para limpiar el teclado de la pantalla
 }
 
     
@@ -423,7 +449,7 @@ function solicitarAnulacion(idRegistro) {
     const registro = historialLecturas.find(item => item.id === idRegistro);
     if (registro && !registro.esAnulado) {
         registro.esAnulado = true;
-        registro.estadoOrigen = "R"; 
+      //  registro.estadoOrigen = "R"; 
         registro.estadoDestino = "ANULADO"; 
         registro.destino = "ANULA ID: " + String(idRegistro); 
         guardarEnMemoriaLocal();
@@ -484,39 +510,116 @@ function enviarAGoogleSheets(objetoRegistro) {
   });
 }
 
-
 function actualizarTablaVista() {
   const tbody = document.getElementById('tabla-cuerpo');
-  tbody.innerHTML = "";
-  
-  historialLecturas.forEach(reg => {
-    const fila = document.createElement('tr');
-    if (reg.esAnulado) fila.classList.add('registro-anulado');
-    
-    // DETERMINACIÓN INDUSTRIAL DE ESTADO VISUAL
-    // Si el registro no tiene la propiedad 'sincronizado' y estamos sin red, nace en minúscula y amarillo
-    const yaSincronizado = reg.sincronizado === true;
-    const botonTexto = yaSincronizado ? "ANULAR" : "Anular";
-    const botonEstilo = yaSincronizado ? "" : "background-color: #fef08a; color: #854d0e; font-weight: bold; border: 1px solid #ca8a04;";
+  const thead = document.querySelector("table thead");
+  if (!tbody || !thead) return;
 
-    fila.innerHTML = `
-      <td>${reg.fechaHora}</td>
-      <td>${reg.origen}</td>
-      <td><strong>${reg.estadoOrigen}</strong></td>
-      <td>${reg.qrCompleto}</td>
-      <td>${reg.sku}</td>
-      <td>${reg.serie}</td>
-      <td><strong>${reg.estadoDestino}</strong></td>
-      <td>${reg.destino}</td>
-      <td>
-        ${ (!reg.esAnulado) ?
-          `<button class="btn-anular" style="${botonEstilo}" onclick="solicitarAnulacion(${reg.id})">${botonTexto}</button>` :
-          `<span class="badge-anulado">${reg.estadoDestino === 'ANULADO' ? 'Anulado' : 'ANULADO'}</span>` }
-      </td>
+  // MODO 1: LISTADO UNITARIO CRONOLÓGICO (Modo actual)
+  if (modoVistaActual === "listado") {
+    thead.innerHTML = `
+      <tr>
+        <th>Fecha y Hora</th>
+        <th>Origen</th>
+        <th>Estado (O)</th>
+        <th>Producto QR</th>
+        <th>SKU</th>
+        <th>Serie</th>
+        <th>Estado Orden</th>
+        <th>Destino</th>
+        <th>Acción</th>
+      </tr>
     `;
-    tbody.appendChild(fila);
-  });
+
+    tbody.innerHTML = "";
+    historialLecturas.forEach(reg => {
+      const fila = document.createElement('tr');
+      if (reg.esAnulado) fila.classList.add('registro-anulado');
+      
+      const yaSincronizado = reg.sincronizado === true;
+      const botonTexto = yaSincronizado ? "ANULAR" : "Anular";
+      const botonEstilo = yaSincronizado ? "" : "background-color: #fef08a; color: #854d0e; font-weight: bold; border: 1px solid #ca8a04;";
+
+      fila.innerHTML = `
+        <td>${reg.fechaHora}</td>
+        <td>${reg.origen}</td>
+        <td><strong>${reg.estadoOrigen}</strong></td>
+        <td>${reg.qrCompleto}</td>
+        <td>${reg.sku}</td>
+        <td>${reg.serie}</td>
+        <td><strong>${reg.estadoDestino}</strong></td>
+        <td>${reg.destino}</td>
+        <td>
+          ${ (!reg.esAnulado) ?
+            `<button class="btn-anular" style="${botonEstilo}" onclick="solicitarAnulacion(${reg.id})">${botonTexto}</button>` :
+            `<span class="badge-anulado">${reg.estadoDestino === 'ANULADO' ? 'Anulado' : 'ANULADO'}</span>` }
+        </td>
+      `;
+      tbody.appendChild(fila);
+    });
+
+  // MODO 2: SUBTOTALES POR SKU (Columna descripción eliminada)
+  // MODO 2: SUBTOTALES POR SKU - VERSIÓN LIMPIA, ULTRA-SEGURA Y EN SEGUNDOS INDUSTRIALES
+  } else if (modoVistaActual === "subtotales") {
+    // Definimos el encabezado limpio de 4 columnas que calza perfecto en celulares
+    thead.innerHTML = `
+      <tr>
+        <th>SKU Producto</th>
+        <th style="text-align: center;">Cantidad Válida</th>
+        <th style="text-align: center;">Cantidad Anulada</th>
+        <th style="text-align: center;">Total Escaneado</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = "";
+
+    // Objeto contenedor para la suma de la sesión
+    const agrupadoSKU = {};
+
+    // Agrupamos el historial de forma directa y nativa
+    historialLecturas.forEach(reg => {
+      // Nos aseguramos de limpiar espacios para evitar duplicados visuales
+      const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
+
+      if (!agrupadoSKU[skuClave]) {
+        agrupadoSKU[skuClave] = {
+          sku: skuClave,
+          validos: 0,
+          anulados: 0
+        };
+      }
+      
+      // Clasificación directa basada en tu bandera de anulación en pantalla
+      if (reg.esAnulado) {
+        agrupadoSKU[skuClave].anulados++;
+      } else {
+        agrupadoSKU[skuClave].validos++;
+      }
+    });
+
+    // Dibujamos las filas con los mismos estilos y colores aprobados
+    Object.values(agrupadoSKU).forEach(item => {
+      const fila = document.createElement('tr');
+      const totalPorSKU = item.validos + item.anulados;
+
+      fila.innerHTML = `
+        <td><strong style="color: #1e3a8a; letter-spacing: 0.5px; font-size: 1.1rem;">${item.sku}</strong></td>
+        <td style="text-align: center; color: #16a34a; font-weight: bold; font-size: 1.1rem;">${item.validos} u.</td>
+        <td style="text-align: center; color: ${item.anulados > 0 ? '#dc2626' : '#9ca3af'}; font-weight: ${item.anulados > 0 ? 'bold' : 'normal'}; font-style: ${item.anulados > 0 ? 'normal' : 'italic'};">${item.anulados} u.</td>
+        <td style="text-align: center; font-weight: bold; background-color: #f3f4f6;">${totalPorSKU} u.</td>
+      `;
+      tbody.appendChild(fila);
+    });
+    
+    // Alerta visual si la tabla se encuentra vacía
+    if (Object.keys(agrupadoSKU).length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#9ca3af;">No hay datos capturados en esta sesión para resumir.</td></tr>`;
+    }
+  }
+
+  
 }
+
 
 function sincronizarHistorialPendiente() {
   if (!navigator.onLine) return;

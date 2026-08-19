@@ -463,29 +463,36 @@ function enviarAGoogleSheets(objetoRegistro) {
     guardarEnMemoriaLocal(); // Guardamos el estado 'no sincronizado' en la RAM/Storage
     return;
   }
-// CAMINO ONLINE: Intento de transmisión normal
+
+	// // CAMINO ONLINE: Intento de transmisión normal
 fetch(URL_GOOGLE_APP, {
   method: "POST",
-  // 1. ELIMINA: mode: "no-cors" (Google lo rechazará)
-  // 2. AGREGA esto para mandar las cookies de la sesión activa de Gmail:
   credentials: "include", 
-  headers: { "Content-Type": "text/plain" }, // Usar text/plain evita problemas de preflight CORS en Apps Script
+  redirect: "follow", // 🚀 Esto destraba la espera de Google
+  headers: { "Content-Type": "text/plain" }, 
   body: JSON.stringify(objetoRegistro)
 })
 .then(response => {
-  // Opcional: Puedes verificar si Google te dio un código 401 o 403 de no autorizado
   if (!response.ok) throw new Error("Error de autenticación o red");
   
-  // ¡ÉXITO DE SUBIDA! Cambiamos a mayúsculas, quitamos amarillo y actualizamos memoria
-  console.log("Transmisión exitosa. Cambiando estado a ANULAR.");
+  console.log("Transmisión exitosa. Activando botón de anulación real.");
   objetoRegistro.sincronizado = true;
   guardarEnMemoriaLocal();
   
-  if (botonAnular && botonAnular.innerText === "Anular") {
+  // Cambiamos al estado operativo real (Rojo y Mayúsculas)
+  if (botonAnular) {
     botonAnular.innerText = "ANULAR";
-    botonAnular.style.cssText = ""; 
+    botonAnular.style.backgroundColor = "#d32f2f"; // Rojo de borrado/anulación
+    botonAnular.style.color = "white";
   }
 })
+.catch(err => {
+  console.error("Fallo de red. Se mantiene en amarillo (Bloqueado):", err);
+  objetoRegistro.sincronizado = false;
+  guardarEnMemoriaLocal();
+});
+
+	  
 .catch(err => {
   console.error("Fallo de red al transmitir remotamente:", err);
   // Tu lógica offline existente se ejecuta de forma impecable si falla el login
@@ -494,7 +501,6 @@ fetch(URL_GOOGLE_APP, {
 });
 
 }
-
 
 function actualizarTablaVista() {
   const tbody = document.getElementById('tabla-cuerpo');
@@ -532,39 +538,36 @@ function actualizarTablaVista() {
 function sincronizarHistorialPendiente() {
   if (!navigator.onLine) return;
 
-  console.log("Señal restablecida. Escaneando botones 'Anular' pendientes...");
+  console.log("Señal restablecida. Sincronizando registros en amarillo...");
 
-  // Recorremos nuestro arreglo local buscando los que se quedaron sin sincronizar
   historialLecturas.forEach((reg, index) => {
     if (reg.sincronizado !== true && !reg.esAnulado) {
 
       fetch(URL_GOOGLE_APP, {
         method: "POST",
-        credentials: "include", // Permite enviar la sesión de Google activa
-        headers: { "Content-Type": "text/plain" }, // Evita problemas de preflight CORS
+        credentials: "include",
+        redirect: "follow", // 🚀 Evita que se cuelgue procesando el lote
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(reg)
       })
       .then(response => {
-        // Valida que Google haya procesado la petición correctamente
-        if (!response.ok) throw new Error("No autorizado o error de servidor");
-        return response.text();
-      })
-      .then(() => {
-        // Marcamos como completado si la respuesta fue exitosa
+        if (!response.ok) throw new Error("Fallo en servidor");
+        
         reg.sincronizado = true;
         guardarEnMemoriaLocal();
 
-        // Buscamos el botón específico en la pantalla para actualizarlo en vivo
+        // Buscamos la fila en la pantalla de la tablet para mutar el botón a Rojo
         const filasHTML = document.querySelectorAll("#tabla-cuerpo tr");
         if (filasHTML[index]) {
           const boton = filasHTML[index].querySelector(".btn-anular");
-          if (boton && boton.innerText === "Anular") {
+          if (boton) {
             boton.innerText = "ANULAR";
-            boton.style.cssText = ""; // Remueve el amarillo
+            boton.style.backgroundColor = "#d32f2f"; // Pasa a Rojo operativo
+            boton.style.color = "white";
           }
         }
       })
-      .catch(e => console.error("Reintento fallido para registro id: " + reg.id, e));
+      .catch(e => console.error("Reintento fallido para ID: " + reg.id, e));
     }
   });
 }

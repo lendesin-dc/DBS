@@ -53,7 +53,7 @@
 
 <div class="contenedor">
 <!-- El título ahora es el botón de autenticación a todo el ancho -->
-<a href="https://script.google.com/macros/s/AKfycbxWVZSy0O18Lv8WcIYVmv1toTJTDGxdBs7e3boFpWxa-EmY29sXxOx3jhTKfY2fA9E4VQ/exec" target="_blank" style="text-decoration: none; display: block; width: 100%;">
+<a href="https://script.google.com/macros/s/AKfycbwL9SZx5iv2zF74lQ0-5B-KOqbidiz2Ix4vTxQTzzG4QTYIxieSBAwg3DmvtDU5TEmdLA/exec" target="_blank" style="text-decoration: none; display: block; width: 100%;">
   <h2 style="text-align: center; margin-top: 0; padding: 5px; background-color: #f0f4f9; color: #1a1a1a; border-radius: 6px; border: 1px solid #dcdcdc; font-family: 'Segoe UI', Arial, sans-serif;">
     🔑 Registro de Bodega S
   </h2>
@@ -152,7 +152,7 @@
 <!-- Reemplaza desde aquí hasta el final de tu archivo -->
 <script>
 // 1. CONFIGURACIÓN COMPLETA DE TU ENTORNO REMOTO DE GOOGLE
-const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbxWVZSy0O18Lv8WcIYVmv1toTJTDGxdBs7e3boFpWxa-EmY29sXxOx3jhTKfY2fA9E4VQ/exec"; 
+const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwL9SZx5iv2zF74lQ0-5B-KOqbidiz2Ix4vTxQTzzG4QTYIxieSBAwg3DmvtDU5TEmdLA/exec"; 
 const MINUTOS_RESTRICCION_DUPLICADO = 5;
 
 let configuracionActual = {
@@ -533,22 +533,27 @@ function sincronizarHistorialPendiente() {
   if (!navigator.onLine) return;
 
   console.log("Señal restablecida. Escaneando botones 'Anular' pendientes...");
-  
+
   // Recorremos nuestro arreglo local buscando los que se quedaron sin sincronizar
   historialLecturas.forEach((reg, index) => {
     if (reg.sincronizado !== true && !reg.esAnulado) {
-      
+
       fetch(URL_GOOGLE_APP, {
         method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Permite enviar la sesión de Google activa
+        headers: { "Content-Type": "text/plain" }, // Evita problemas de preflight CORS
         body: JSON.stringify(reg)
       })
+      .then(response => {
+        // Valida que Google haya procesado la petición correctamente
+        if (!response.ok) throw new Error("No autorizado o error de servidor");
+        return response.text();
+      })
       .then(() => {
-        // Marcamos como completado
+        // Marcamos como completado si la respuesta fue exitosa
         reg.sincronizado = true;
         guardarEnMemoriaLocal();
-        
+
         // Buscamos el botón específico en la pantalla para actualizarlo en vivo
         const filasHTML = document.querySelectorAll("#tabla-cuerpo tr");
         if (filasHTML[index]) {
@@ -563,6 +568,7 @@ function sincronizarHistorialPendiente() {
     }
   });
 }
+
 
 // Disparadores nativos del dispositivo móvil
 window.addEventListener('online', sincronizarHistorialPendiente);

@@ -30,8 +30,8 @@
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
-        .franja-lector label { display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
-        .input-qr { width: 100%; padding: 5px; font-size: 20px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
+        .franja-lector label { font-size: 22px; display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
+        .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
@@ -105,13 +105,13 @@
     <!-- TABLA DE HISTORIAL RESPONSIVA -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
   <div style="display: flex; align-items: center; gap: 15px;">
-    <h3 style="margin: 0; font-family: sans-serif;">Registros de la sesión</h3>
+    <h3 style="margin: 0; font-family: sans-serif;">Registros</h3>
     <!-- NUESTRO BOTÓN INTERRUPTOR INTERACTIVO -->
-    <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;">
+    <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;">
       📊 Ver SubTotales
     </button>
   </div>
-  <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" class="btn-limpiar">Limpiar Vista</button>
+  <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" class="btn-limpiar; font-size: 0.9rem;">Limpiar Vista</button>
 </div>
     
     <div class="tabla-contenedor">

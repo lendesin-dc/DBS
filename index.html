@@ -45,7 +45,7 @@
         
         /* Panel inferior de utilidades */
         .panel-inferior { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; }
-        .btn-limpiar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .btn-limpiar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
         .btn-limpiar:hover { background: #5c636a; }
     </style>
 </head>
@@ -107,11 +107,11 @@
   <div style="display: flex; align-items: center; gap: 15px;">
     <h3 style="margin: 0; font-family: sans-serif;">Registros</h3>
     <!-- NUESTRO BOTÓN INTERRUPTOR INTERACTIVO -->
-    <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;">
+    <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s;">
       📊 Ver SubTotales
     </button>
   </div>
-  <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" class="btn-limpiar; font-size: 0.9rem;">Limpiar Vista</button>
+  <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" class="btn-limpiar">Limpiar Vista</button>
 </div>
     
     <div class="tabla-contenedor">

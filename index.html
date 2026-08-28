@@ -30,7 +30,7 @@
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
-        .franja-lector label { font-size: 22px; display: block; font-weight: bold; margin-bottom: 6px; color: #084298; }
+        .franja-lector label { font-size: 25px; display: block; font-weight: bold; margin-bottom: 12px; color: #084298; }
         .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
@@ -118,13 +118,13 @@
         <table id="tabla-registros">
             <thead>
                 <tr>
-                    <th>Fecha y Hora</th>
+                    <th>Fecha Hora</th>
                     <th>Origen</th>
-                    <th>Estado (O)</th>
-                    <th>Producto QR</th>
-                    <th>SKU</th>
+                    <th>Est.Orig</th>
+                    <th>QR Serial</th>
+                    <th>Producto</th>
                     <th>Serie</th>
-                    <th>Estado  Orden</th>
+                    <th>Est.Sal</th>
                     <th>Destino</th>
                     <th>Acción</th>
                 </tr>
@@ -197,7 +197,7 @@ window.onload = function() {
     sincronizarMotorHardware(); // Inicializa el detector al cargar
 
        // Foco manual controlado SOLO al iniciar la app
-    const input = document.getElementById('txt-lector');
+    const input = document.getElementById('C-328');
     if (input) input.focus();
 };
 
@@ -256,7 +256,7 @@ function mostrarConfirmacionGigante(sku, serie) {
   // Temporizador para que se desvanezca solo a los 3500 milisegundos (3,5 segundos)
   setTimeout(() => {
     modalExito.style.display = "none";
-  }, 2000);
+  }, 2500);
 }
 
 
@@ -267,7 +267,7 @@ function sincronizarMotorHardware() {
         // Modificamos visualmente el label azul para que el operador sepa que puede usar la cámara
         const labelLector = document.querySelector('label[for="txt-lector"]');
         if (labelLector) {
-            labelLector.innerHTML = "📸 LECTURA QR-Serie (Presione)";
+            labelLector.innerHTML = "📸 LECTURA QR (Presione)";
             labelLector.style.cursor = "pointer";
             labelLector.style.textDecoration = "underline";
             labelLector.onclick = encenderCamaraBodega;
@@ -281,7 +281,7 @@ function sincronizarMotorHardware() {
 // 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
 async function encenderCamaraBodega() {
     // 1. Escondemos el teclado de forma forzada
-    const inputReal = document.getElementById('txt-lector');
+    const inputReal = document.getElementById('C-328');
 
     if (inputReal) {
         inputReal.blur();
@@ -450,13 +450,13 @@ function solicitarAnulacion(idRegistro) {
     if (registro && !registro.esAnulado) {
         registro.esAnulado = true;
       //  registro.estadoOrigen = "R"; 
-        registro.estadoDestino = "ANULADO"; 
+      //  registro.estadoDestino = "ANULADO"; 
         registro.destino = "ANULA ID: " + String(idRegistro); 
         guardarEnMemoriaLocal();
         actualizarTablaVista();
         enviarAGoogleSheets(registro);
     }
-    document.getElementById('txt-lector').focus();
+    document.getElementById('C-328').focus();
 }
 
 function guardarEnMemoriaLocal() {
@@ -469,7 +469,7 @@ function limpiarPantallaCompleta() {
         localStorage.removeItem('historial_bodega');
         actualizarTablaVista();
     }
-    document.getElementById('txt-lector').focus();
+    document.getElementById('C-328').focus();
 }
 
 function enviarAGoogleSheets(objetoRegistro) {
@@ -521,11 +521,11 @@ function actualizarTablaVista() {
       <tr>
         <th>Fecha y Hora</th>
         <th>Origen</th>
-        <th>Estado (O)</th>
-        <th>Producto QR</th>
-        <th>SKU</th>
+        <th>Est.Or</th>
+        <th>QR Serial</th>
+        <th>Producto</th>
         <th>Serie</th>
-        <th>Estado Orden</th>
+        <th>Est.Des</th>
         <th>Destino</th>
         <th>Acción</th>
       </tr>
@@ -564,10 +564,10 @@ function actualizarTablaVista() {
     // Definimos el encabezado limpio de 4 columnas que calza perfecto en celulares
     thead.innerHTML = `
       <tr>
-        <th>SKU Producto</th>
-        <th style="text-align: center;">Cantidad Válida</th>
-        <th style="text-align: center;">Cantidad Anulada</th>
-        <th style="text-align: center;">Total Escaneado</th>
+        <th>Producto</th>
+        <th style="text-align: center;">Válidos</th>
+        <th style="text-align: center;">Anulados</th>
+        <th style="text-align: center;">Total</th>
       </tr>
     `;
 
@@ -603,10 +603,10 @@ function actualizarTablaVista() {
       const totalPorSKU = item.validos + item.anulados;
 
       fila.innerHTML = `
-        <td><strong style="color: #1e3a8a; letter-spacing: 0.5px; font-size: 1.1rem;">${item.sku}</strong></td>
-        <td style="text-align: center; color: #16a34a; font-weight: bold; font-size: 1.1rem;">${item.validos} u.</td>
-        <td style="text-align: center; color: ${item.anulados > 0 ? '#dc2626' : '#9ca3af'}; font-weight: ${item.anulados > 0 ? 'bold' : 'normal'}; font-style: ${item.anulados > 0 ? 'normal' : 'italic'};">${item.anulados} u.</td>
-        <td style="text-align: center; font-weight: bold; background-color: #f3f4f6;">${totalPorSKU} u.</td>
+        <td><strong style="width: 30%; color: #1e3a8a; letter-spacing: 0.5px; font-size: 1.1rem;">${item.sku}</strong></td>
+        <td style="width: 25%; text-align: center; color: #16a34a; font-weight: bold; font-size: 1.1rem;">${item.validos} u.</td>
+        <td style="width: 20%; text-align: center; color: ${item.anulados > 0 ? '#dc2626' : '#9ca3af'}; font-weight: ${item.anulados > 0 ? 'bold' : 'normal'}; font-style: ${item.anulados > 0 ? 'normal' : 'italic'};">${item.anulados} u.</td>
+        <td style="width: 25%; text-align: center; font-weight: bold; background-color: #f3f4f6;">${totalPorSKU} u.</td>
       `;
       tbody.appendChild(fila);
     });

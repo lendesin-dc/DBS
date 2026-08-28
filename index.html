@@ -263,7 +263,7 @@ function mostrarConfirmacionGigante(sku, serie) {
 // 3. NUEVA FUNCIÓN: COMPROBACIÓN NATIVA DE DISPOSITIVOS
 function sincronizarMotorHardware() {
     if ('BarcodeDetector' in window) {
-        detectorNativoBodega = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
+        detectorNativoBodega = new BarcodeDetector({ formats: ['qr_code'] });
         // Modificamos visualmente el label azul para que el operador sepa que puede usar la cámara
         const labelLector = document.querySelector('label[for="txt-lector"]');
         if (labelLector) {

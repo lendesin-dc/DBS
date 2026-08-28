@@ -30,12 +30,12 @@
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
-        .franja-lector label { font-size: 25px; display: block; font-weight: bold; margin-bottom: 12px; color: #084298; }
+        .franja-lector label { font-size: 24px; display: block; font-weight: bold; margin-bottom: 14px; color: #084298; }
         .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 750px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px; }
         th { background: #212529; color: white; padding: 7px; }
         td { padding: 5px; border-bottom: 1px solid #dee2e6; }
         
@@ -235,7 +235,7 @@ function sonarBip750Hz() {
     oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
     
     // Subimos de 0.2 a 0.8 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.9, audioCtx.currentTime);
     
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.14);

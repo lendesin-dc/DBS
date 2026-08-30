@@ -199,7 +199,7 @@ window.onload = function() {
        // Foco manual controlado SOLO al iniciar la app
     const input = document.getElementById('txt-lector');
     if (input) input.focus();
-    input.setAttribute('inputmode', 'none'); 
+  //  input.setAttribute('inputmode', 'none'); 
 
 };
 
@@ -345,7 +345,7 @@ async function analizarCuadroEnVivo() {
                 input.value = codigos[0].rawValue; // Setea la cadena compleja (ej: CH-5050NG#2605000002#B)
                 
                 apagarCamaraBodega(); // Apaga inmediatamente el hardware liberando RAM
-
+input.setAttribute('inputmode', 'txt');
                 // Simulamos la pulsación física de la tecla Enter para disparar tu lógica nativa de guardado
                 const fakeEvent = { key: 'Enter' };
                 procesarLectura(fakeEvent);

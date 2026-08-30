@@ -153,7 +153,7 @@
 <!-- Reemplaza desde aquí hasta el final de tu archivo -->
 <script>
 // 1. CONFIGURACIÓN COMPLETA DE TU ENTORNO REMOTO DE GOOGLE
-const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbxWVZSy0O18Lv8WcIYVmv1toTJTDGxdBs7e3boFpWxa-EmY29sXxOx3jhTKfY2fA9E4VQ/exec"; 
+const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbzoGUyCM56jgevb97TDkkN5Urtcccb-wI4HaEQOYIKxhP2howg5HaGA5QAyl66osnDsuw/exec"; 
 const MINUTOS_RESTRICCION_DUPLICADO = 5;
 
 let configuracionActual = {
@@ -197,8 +197,10 @@ window.onload = function() {
     sincronizarMotorHardware(); // Inicializa el detector al cargar
 
        // Foco manual controlado SOLO al iniciar la app
-    const input = document.getElementById('C-328');
+    const input = document.getElementById('txt-lector');
     if (input) input.focus();
+    input.setAttribute('inputmode', 'none'); 
+
 };
 
 function cambiarSeleccion(botonPresionado, propiedad) {
@@ -281,7 +283,8 @@ function sincronizarMotorHardware() {
 // 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
 async function encenderCamaraBodega() {
     // 1. Escondemos el teclado de forma forzada
-    const inputReal = document.getElementById('C-328');
+    const inputReal = document.getElementById('txt-lector');
+    input.setAttribute('inputmode', 'none'); 
 
     if (inputReal) {
         inputReal.blur();

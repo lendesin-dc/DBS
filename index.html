@@ -13,7 +13,7 @@
         .contenedor { max-width: 900px; margin: 0 auto; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         h2 { text-align: center; margin-top: 0; font-size: 1.2rem; color: #1a1a1a; }
         
-        .franja-botones { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; background: #f8f9fa; padding: 5px; border-radius: 6px; }
+        .franja-botones { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; background: #f8f9fa; padding: 5px; border-radius: 6px; }
         .fila-botones { display: flex; flex-direction: column; gap: 7px; }
         
         /* En pantallas grandes ponemos las etiquetas al lado, en celulares arriba */
@@ -30,7 +30,7 @@
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
-        .franja-lector label { font-size: 24px; display: block; font-weight: bold; margin-bottom: 14px; color: #084298; }
+        .franja-lector label { font-size: 26px; display: block; font-weight: bold; margin-bottom: 16px; color: #084298; }
         .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
@@ -154,7 +154,7 @@
 <script>
 // 1. CONFIGURACIÓN COMPLETA DE TU ENTORNO REMOTO DE GOOGLE
 const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbzoGUyCM56jgevb97TDkkN5Urtcccb-wI4HaEQOYIKxhP2howg5HaGA5QAyl66osnDsuw/exec"; 
-const MINUTOS_RESTRICCION_DUPLICADO = 5;
+const MINUTOS_RESTRICCION_DUPLICADO = 7;
 
 let configuracionActual = {
     origen: 'C-328',
@@ -197,10 +197,8 @@ window.onload = function() {
     sincronizarMotorHardware(); // Inicializa el detector al cargar
 
        // Foco manual controlado SOLO al iniciar la app
-    const input = document.getElementById('txt-lector');
+    const input = document.getElementById('C-328');
     if (input) input.focus();
-  //  input.setAttribute('inputmode', 'none'); 
-
 };
 
 function cambiarSeleccion(botonPresionado, propiedad) {
@@ -283,8 +281,7 @@ function sincronizarMotorHardware() {
 // 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
 async function encenderCamaraBodega() {
     // 1. Escondemos el teclado de forma forzada
-    const inputReal = document.getElementById('txt-lector');
-    input.setAttribute('inputmode', 'none'); 
+    const inputReal = document.getElementById('C-328');
 
     if (inputReal) {
         inputReal.blur();
@@ -345,7 +342,7 @@ async function analizarCuadroEnVivo() {
                 input.value = codigos[0].rawValue; // Setea la cadena compleja (ej: CH-5050NG#2605000002#B)
                 
                 apagarCamaraBodega(); // Apaga inmediatamente el hardware liberando RAM
-input.setAttribute('inputmode', 'txt');
+
                 // Simulamos la pulsación física de la tecla Enter para disparar tu lógica nativa de guardado
                 const fakeEvent = { key: 'Enter' };
                 procesarLectura(fakeEvent);

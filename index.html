@@ -628,7 +628,7 @@ function sincronizarHistorialPendiente() {
   
   // Recorremos nuestro arreglo local buscando los que se quedaron sin sincronizar
   historialLecturas.forEach((reg, index) => {
-    if (reg.sincronizado !== true && !reg.esAnulado) {
+    if (reg.sincronizado !== true      ) {                    //   && !reg.esAnulado ... despues de true y antes del )
       
       fetch(URL_GOOGLE_APP, {
         method: "POST",

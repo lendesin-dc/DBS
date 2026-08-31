@@ -450,7 +450,7 @@ function solicitarAnulacion(idRegistro) {
     if (registro && !registro.esAnulado) {
         registro.esAnulado = true;
       //  registro.estadoOrigen = "R"; 
-      //  Registro.sincronizado = false; 
+      //  registro.estadoDestino = "ANULADO"; 
         registro.destino = "NULO";   // + String(idRegistro); 
         guardarEnMemoriaLocal();
         actualizarTablaVista();

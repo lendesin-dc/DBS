@@ -392,7 +392,7 @@ function procesarLectura(evento) {
     const segmentos = cadenaQR.split('#');
     const skuExtraido = segmentos[0] || 'ERROR';
     const serieExtraida = segmentos[1] || 'ERROR';
-    const estadoDestinoExtraido = segmentos[2] || 'ERROR';
+    const estadoDestinoExtraido = segmentos[2] || '-';
 
     const momentoActual = Date.now();
     const registroDuplicado = historialLecturas.find(item => 
@@ -451,7 +451,7 @@ function solicitarAnulacion(idRegistro) {
         registro.esAnulado = true;
       //  registro.estadoOrigen = "R"; 
       //  registro.estadoDestino = "ANULADO"; 
-        registro.destino = "ANULA ID: " + String(idRegistro); 
+        registro.destino = "NULO";   // + String(idRegistro); 
         guardarEnMemoriaLocal();
         actualizarTablaVista();
         enviarAGoogleSheets(registro);

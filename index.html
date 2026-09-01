@@ -30,8 +30,8 @@
         button.btn-opcion.activo { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
         
         .franja-lector { margin-bottom: 10px; background: #e7f1ff; padding: 7px; border-radius: 6px; border: 1px solid #b6d4fe; }
-        .franja-lector label { font-size: 26px; display: block; font-weight: bold; margin-bottom: 16px; color: #084298; }
-        .input-qr { width: 100%; padding: 5px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
+        .franja-lector label { font-size: 26px; display: block; font-weight: bold; margin-bottom: 20px; color: #084298; }
+        .input-qr { width: 100%; padding: 8px; font-size: 18px; border: 2px solid #86b7fe; border-radius: 6px; box-sizing: border-box; }
         
         /* Contenedor responsivo para que la tabla no rompa el diseño en celular */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 10px; }
@@ -256,7 +256,7 @@ function mostrarConfirmacionGigante(sku, serie) {
   // Temporizador para que se desvanezca solo a los 3500 milisegundos (3,5 segundos)
   setTimeout(() => {
     modalExito.style.display = "none";
-  }, 2500);
+  }, 2000);
 }
 
 

@@ -135,19 +135,20 @@
 </div>
 
 <!-- VENTANA EMERGENTE GIGANTE PARA CONFIRMACIÓN DE LECTURA -->
-<div id="modal-exito-gigante" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
-  <div style="font-size: 6rem; margin-bottom: 0px;">✅</div>
-  <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
-  
-  <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-    <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
-    <div id="exito-sku" style="font-size: 3.1rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
-    
-    <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
-    <div id="exito-serie" style="font-size: 3.1rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
-  </div>
-  <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+<!-- >>> BUSCA EL DIV DE #modal-exito-gigante Y REEMPLÁZALO COMPLETAMENTE CON ESTO <<< -->
+<div id="modal-exito-gigante" onclick="pantallaVerdePresionada()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(16,185,129,0.98); z-index:10000; align-items:center; justify-content:center; flex-direction:column; color:white; font-family:sans-serif; text-align:center; padding:20px; box-sizing:border-box; cursor:pointer;">
+ <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; opacity: 0.9;">Lectura Exitosa</div>
+ 
+ <div style="background:rgba(0,0,0,0.2); padding: 25px 40px; border-radius: 16px; min-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+   <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SKU:</div>
+   <div id="exito-sku" style="font-size: 3.1rem; font-weight: 900; line-height: 1; margin-bottom: 25px; word-break: break-all; letter-spacing: 1px;">-</div>
+ 
+   <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+   <div id="exito-serie" style="font-size: 3.1rem; font-weight: 900; line-height: 1; word-break: break-all; color: #fef08a; letter-spacing: 1px;">-</div>
+ </div>
+ <div style="font-size: 1.3rem; margin-top: 40px; opacity: 0.9; font-weight: bold; animation: pulse 1.5s infinite;">👇 TOQUE LA PANTALLA <br> PARA <br> EL SIGUIENTE QR 👇</div>
 </div>
+
 
 
 <!-- Reemplaza desde aquí hasta el final de tu archivo -->
@@ -244,22 +245,28 @@ function sonarBip750Hz() {
   }
 }
 
+// >>> NUEVAS REGLAS DE NAVEGACIÓN EN RÁFAGA <<<
 
 function mostrarConfirmacionGigante(sku, serie) {
-  // Inyectamos los textos en mayúsculas y de forma masiva
   document.getElementById('exito-sku').innerText = String(sku).toUpperCase();
   document.getElementById('exito-serie').innerText = String(serie).toUpperCase();
   
+  // Desplegamos el modal verde gigante
   const modalExito = document.getElementById('modal-exito-gigante');
   modalExito.style.display = "flex";
   
-  // Temporizador para que se desvanezca solo a los 3500 milisegundos (3,5 segundos)
-  setTimeout(() => {
-    modalExito.style.display = "none";
-  }, 2000);
+  // ¡IMPORTANTE!: Quitamos el setTimeout automático para que se quede esperando el toque del operario
 }
 
 
+	function pantallaVerdePresionada() {
+  // 1. Escondemos el cartel de éxito
+  document.getElementById('modal-exito-gigante').style.display = "none";
+  
+  // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
+  encenderCamaraBodega(); //
+}
+	
 // 3. NUEVA FUNCIÓN: COMPROBACIÓN NATIVA DE DISPOSITIVOS
 function sincronizarMotorHardware() {
     if ('BarcodeDetector' in window) {
@@ -276,8 +283,6 @@ function sincronizarMotorHardware() {
 }
 
     
-// 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA
-
 // 4. NUEVA FUNCIÓN: TRANSMISIÓN DE VIDEO CON RESOLUCIÓN EN BODEGA (CORREGIDA)
 async function encenderCamaraBodega() {
     // 1. Escondemos el teclado de forma forzada
@@ -286,7 +291,10 @@ async function encenderCamaraBodega() {
     if (inputReal) {
         inputReal.blur();
     }
-    // Al tocar el botón con el dedo, disparamos esto para habilitar el permiso del parlante
+ 	// >>> AÑADE ESTA LÍNEA AQUÍ PARA APAGAR EL TECLADO EN EL LECTOR QR <<<
+ 	document.getElementById('txt-lector').setAttribute('inputmode', 'none');
+	
+	// Al tocar el botón con el dedo, disparamos esto para habilitar el permiso del parlante
     sonarBip750Hz(); 
   
     // 2. Si no existe la interfaz del visor en el HTML, la inyectamos dinámicamente
@@ -301,7 +309,7 @@ async function encenderCamaraBodega() {
                 <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
                 <div id="laser-guia" style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.7); box-shadow:0 0 4px #ff0000; pointer-events:none; z-index:10;"></div>
             </div>
-            <button onclick="apagarCamaraBodega()" style="margin-top:20px; padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">❌ Cancelar Escaneo</button>
+            <button onclick="apagarCamaraBodega()" style="margin-top:20px; padding:12px 25px; background:#dc3545; font-size:1.3rem; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">❌ Cancelar Escaneo</button>
         `;
         document.body.appendChild(modal);
     }
@@ -317,7 +325,7 @@ async function encenderCamaraBodega() {
                 audio: false
             });
             video.srcObject = streamActivoBodega;
-            bucleEscaneo = setInterval(analizarCuadroEnVivo, 180); 
+            bucleEscaneo = setInterval(analizarCuadroEnVivo, 300); 
         } catch (err) {
             alert("Acceso a la cámara trasera denegado o no disponible.");
             modal.style.display = "none";
@@ -373,8 +381,9 @@ function apagarCamaraBodega() {
         // el foco a toda la página para asegurar que el teclado no se levante.
         document.activeElement.blur();
     }
+	// >>> AÑADE ESTA LÍNEA AQUÍ PARA RESTAURAR EL TECLADO PARA LECTURAS MANUALES FUTURAS <<<
+ 	document.getElementById('txt-lector').setAttribute('inputmode', 'text');
 }
-
 
 // --- TU LÓGICA DE NEGOCIO ORIGINAL INTEGRADA SINTÁCTICAMENTE ---
 function procesarLectura(evento) {
@@ -393,22 +402,39 @@ function procesarLectura(evento) {
     const skuExtraido = segmentos[0] || 'ERROR';
     const serieExtraida = segmentos[1] || 'ERROR';
     const estadoDestinoExtraido = segmentos[2] || '-';
-
     const momentoActual = Date.now();
-    const registroDuplicado = historialLecturas.find(item => 
-        item.serie === serieExtraida && 
-        item.esAnulado === false &&
-        item.estadoOrigen !== 'ANULADO'
-    );
-    
-    if (registroDuplicado) {
-        const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-        if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
-            const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
-            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
-            input.value = "";
+
+	// >>> REEMPLAZA EL BLOQUE DE REGISTRO DUPLICADO CON ESTE CONTROL DE SEGURIDAD <<<
+	const registroDuplicado = historialLecturas.find(item => 
+  		item &&
+  		item.serie === serieExtraida && 
+  		serieExtraida !== 'ERROR' && // Evita falsos positivos con lecturas corruptas iniciales
+  		item.esAnulado === false &&
+  		item.estadoOrigen !== 'ANULADO'
+		);	
+	
+//	const registroDuplicado = historialLecturas.find(item => 
+//        item.serie === serieExtraida && 
+  //      item.esAnulado === false &&
+  // 	  item.estadoOrigen !== 'ANULADO'
+ //			);
+
+	if (registroDuplicado && registroDuplicado.id) { // Validamos que tenga un ID real
+  const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+  if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
+    const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
+    alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
+    input.value = "";
+    return;
+	  
+ //   if (registroDuplicado) {
+ //       const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+  //      if (diferenciaMinutos < MINUTOS_RESTRICCION_DUPLICADO) {
+ //           const minsRestantes = (MINUTOS_RESTRICCION_DUPLICADO - diferenciaMinutos).toFixed(1);
+ //           alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.\nEspere ${minsRestantes} minutos para repetir.`);
+  //          input.value = "";
      //       input.focus();
-            return;
+  //          return;
         }
     }
     

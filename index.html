@@ -233,13 +233,13 @@ function sonarBip750Hz() {
     gainNode.connect(audioCtx.destination);
     
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+    oscillator.frequency.setValueAtTime(890, audioCtx.currentTime);
     
     // Subimos de 0.2 a 0.8 para que compita contra el ruido ambiental de las grúas horquilla
-    gainNode.gain.setValueAtTime(0.9, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.95, audioCtx.currentTime);
     
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.14);
+    oscillator.stop(audioCtx.currentTime + 0.12);
   } catch (e) { 
     console.error("Audio bloqueado:", e); 
   }
@@ -325,12 +325,12 @@ async function encenderCamaraBodega() {
                 audio: false
             });
             video.srcObject = streamActivoBodega;
-            bucleEscaneo = setInterval(analizarCuadroEnVivo, 300); 
+            bucleEscaneo = setInterval(analizarCuadroEnVivo, 350); 
         } catch (err) {
             alert("Acceso a la cámara trasera denegado o no disponible.");
             modal.style.display = "none";
         }
-    }, 400); // 150 milisegundos de espera para limpiar el teclado de la pantalla
+    }, 300); // 150 milisegundos de espera para limpiar el teclado de la pantalla
 }
 
     

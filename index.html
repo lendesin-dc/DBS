@@ -274,6 +274,9 @@ function sonarBip750Hz() {
     
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.10);
+    if ('vibrate' in navigator) {
+            navigator.vibrate(120); // Una vibración corta y firme de confirmación
+    }  
   } catch (e) { 
     console.error("Audio bloqueado:", e); 
   }
@@ -445,7 +448,7 @@ function procesarLectura(evento) {
 	// >>> REEMPLAZA EL BLOQUE DE REGISTRO DUPLICADO CON ESTE CONTROL DE SEGURIDAD <<<
 	const registroDuplicado = historialLecturas.find(item => 
   		item &&
-  		item.serie === serieExtraida && 
+  		item.serie === serieExtraida && item.sku === skuExtraido &&
   		serieExtraida !== 'ERROR' && // Evita falsos positivos con lecturas corruptas iniciales
   		item.esAnulado === false &&
   		item.estadoOrigen !== 'ANULADO'
